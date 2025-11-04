@@ -8,7 +8,7 @@
 # credit: https://github.com/adobe-research/NoLiMa/blob/main/evaluation/async_api_connector.py
 
 from functools import cache
-from typing import List, Union
+from typing import Union
 
 import httpx
 import tiktoken

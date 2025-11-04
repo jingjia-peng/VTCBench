@@ -15,7 +15,12 @@ class ImageTextPayload:
         self.payloads.append({"type": "text", "text": text.strip()})
 
     def add_image_adaptive(self, image: bytes | str | PILImage.Image, ext: str = None):
-        self.payloads.append({"type": "image_url", "image_url": {"url": adaptive_image_to_data_url(image, ext)}})
+        self.payloads.append(
+            {
+                "type": "image_url",
+                "image_url": {"url": adaptive_image_to_data_url(image, ext)},
+            }
+        )
 
     def to_message_content(self) -> list[dict]:
         for payload in self.payloads:
