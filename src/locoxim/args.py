@@ -123,6 +123,10 @@ class DataArgs:
         default=None,
         metadata={"help": "Static depth for needle placement"},
     )
+    pure_text: bool = field(
+        default=True,
+        metadata={"help": "If true, use pure text as input to LLM/VLM. Otherwise, embed context in images."},
+    )
 
 
 @dataclass

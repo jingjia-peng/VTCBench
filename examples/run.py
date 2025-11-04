@@ -10,6 +10,7 @@ from tqdm import tqdm
 from locoxim.args import DataArgs, ModelArgs, RunArgs
 from locoxim.async_evaluate import NeedleHaystackTester
 from locoxim.dataio import NeedleTestConfig
+from deocr.engine.playwright.async_api import RenderArgs
 
 
 def worker(kwargs):
@@ -21,6 +22,7 @@ def run_test(
     model_args: ModelArgs,
     data_args: DataArgs,
     run_args: RunArgs,
+    render_args: RenderArgs
 ):
     with open(data_args.needle_set_path, "r") as file:
         _raw_dict: list[dict] = json.load(file)
@@ -48,6 +50,7 @@ def run_test(
                     "model_args": deepcopy(model_args),
                     "data_args": deepcopy(data_args),
                     "run_args": deepcopy(run_args),
+                    "render_args": deepcopy(render_args),
                     "question_item": question_item,
                     "haystack_path": haystack_path,
                 }
@@ -63,16 +66,19 @@ if __name__ == "__main__":
 
     parser.add_class_arguments(ModelArgs, "model")
     parser.add_class_arguments(DataArgs, "data")
-    parser.add_class_arguments(RunArgs, "exp")
+    parser.add_class_arguments(RunArgs, "run")
+    parser.add_class_arguments(RenderArgs, "render")
 
     args = parser.parse_args()
 
     model_args: ModelArgs = args.model
     data_args: DataArgs = args.data
-    run_args: RunArgs = args.exp
+    run_args: RunArgs = args.run
+    render_args: RenderArgs = args.render
 
     run_test(
         model_args=model_args,
         data_args=data_args,
         run_args=run_args,
+        render_args=render_args,
     )

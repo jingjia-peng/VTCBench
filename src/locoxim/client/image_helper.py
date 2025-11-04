@@ -4,32 +4,26 @@ from io import BytesIO
 from PIL import Image as PILImage
 
 
-class ImagePayload:
+class ImageTextPayload:
     # for the "content" field in chat messages, but only for image data
     # this should be formatted as
     # "content": [{"type": "image", "image": {"data_url": "<data‑URL string>"}}]
-    def __init__(self, payloads: list[str | dict] = None):
-        self.payloads = payloads or []
+    def __init__(self):
+        self.payloads: list[dict] = []
+
+    def add_text(self, text: str):
+        self.payloads.append({"type": "text", "text": text.strip()})
+
+    def add_image_adaptive(self, image: bytes | str | PILImage.Image, ext: str = None):
+        self.payloads.append({"type": "image_url", "image_url": {"url": adaptive_image_to_data_url(image, ext)}})
 
     def to_message_content(self) -> list[dict]:
-        content = []
         for payload in self.payloads:
-            if isinstance(payload, dict):
-                assert "type" in payload and payload["type"] == "image"
-                assert "image" in payload and "data_url" in payload["image"]
+            # check that it is in correct format
+            assert isinstance(payload, dict)
+            assert "type" in payload and payload["type"] in payload
 
-                # assume it's already in the correct format
-                content.append(payload)
-                continue
-            elif isinstance(payload, str):
-                # a pure text, for problem, etc.
-                content.append({"type": "text", "text": payload})
-                continue
-            else:
-                # its image input, fallback to adaptive conversion
-                data_url = adaptive_image_to_data_url(payload)
-                content.append({"type": "image", "image": {"data_url": data_url}})
-        return content
+        return self.payloads
 
 
 def image_path_to_data_url(image_path: str, ext: str = None) -> str:
@@ -37,7 +31,7 @@ def image_path_to_data_url(image_path: str, ext: str = None) -> str:
 
     Args:
         image_path (str): The path to the image file.
-        ext (optional, str): The image file extension (e.g., "jpg", "png"). If None, it will be inferred from the file name.
+        ext (optional, str): The image file extension (e.g., "jpeg", "png"). If None, it will be inferred from the file name.
 
     Returns:
         str: data‑URL string, e.g. "data:<mime>;base64,<payload>"
@@ -49,22 +43,24 @@ def image_path_to_data_url(image_path: str, ext: str = None) -> str:
         return image_bytes_to_data_url(image_file.read(), ext)
 
 
-def image_object_to_data_url(image_object: PILImage.Image, ext: str = "jpg") -> str:
+def image_object_to_data_url(image_object: PILImage.Image, ext: str = "jpeg") -> str:
     """Convert an image object to a data URL.
 
     Args:
         image_object (PIL.Image.Image): The pillow image object.
-        ext (str): The image file extension (e.g., "jpg", "png").
+        ext (str): The image file extension (e.g., "jpeg", "png").
 
     Returns:
         str: data‑URL string, e.g. "data:<mime>;base64,<payload>"
     """
     # special case for jpg -> pillow's jpeg
-    fmt = ext.upper() if ext.lower() != "jpg" else "JPEG"
+    if ext == "jpg":
+        ext = "jpeg"
 
     with BytesIO() as buffered:
-        image_object.save(buffered, format=fmt)
-        return image_bytes_to_data_url(buffered.getvalue(), ext)
+        image_object.save(buffered, format=ext.upper())
+        bs = buffered.getvalue()
+    return image_bytes_to_data_url(bs, ext)
 
 
 def image_bytes_to_data_url(image_bytes: bytes, ext: str) -> str:
@@ -72,7 +68,7 @@ def image_bytes_to_data_url(image_bytes: bytes, ext: str) -> str:
 
     Args:
         image_bytes (bytes): The image bytes.
-        ext (str): The image file extension (e.g., "jpg", "png").
+        ext (str): The image file extension (e.g., "jpeg", "png").
 
     Returns:
         str: data‑URL string, e.g. "data:<mime>;base64,<payload>"
@@ -85,14 +81,14 @@ def image_bytes_to_data_url(image_bytes: bytes, ext: str) -> str:
 def adaptive_image_to_data_url(
     image: bytes | str | PILImage.Image, ext: str = None
 ) -> str:
-    """Resize the image if larger than max_size and convert to data URL.
+    r"""Resize the image if larger than max_size and convert to data URL.
 
     Args:
-        image (): The pillow image object.
+        image (adaptive): Bytes, local path, or Pillow Image Object.
         max_size (int): The maximum size for width or height.
 
     Returns:
-        str: data‑URL string, e.g. "data:<mime>;base64,<payload>"
+        str: data‑URL string, e.g. ``data:<mime>;base64,<payload>``
     """
     if isinstance(image, bytes):
         # ext must be provided, no guessing
@@ -102,7 +98,7 @@ def adaptive_image_to_data_url(
         # ext optional, prefer to be infered from file ext
         return image_path_to_data_url(image, ext)
     elif isinstance(image, PILImage.Image):
-        # no ext needed, default to jpg
+        # no ext needed, default to jpeg
         return image_object_to_data_url(image)
 
     raise NotImplementedError(f"Unsupported image input {image} with ext {ext}.")

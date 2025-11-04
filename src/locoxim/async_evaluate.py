@@ -14,6 +14,7 @@ import os.path as osp
 import time
 
 import numpy as np
+from deocr.engine.playwright.async_api import RenderArgs
 
 from .args import (
     DataArgs,
@@ -53,12 +54,14 @@ class NeedleHaystackTester:
         model_args: ModelArgs,
         run_args: RunArgs,
         data_args: DataArgs,
+        render_args: RenderArgs | None,
         question_item: QuestionItem,
         haystack_path: str,
     ) -> None:
         self.model_args = model_args
         self.data_args = data_args
         self.run_args = run_args
+        self.render_args = render_args # optional, only for VLMs
 
         self.api_connector = APIConnector(**args_to_dict(model_args))
         self.question_item = question_item
@@ -115,7 +118,6 @@ class NeedleHaystackTester:
             "data_args": args_to_dict(self.data_args),
             "run_args": args_to_dict(self.run_args),
             "question_item": self.question_item.__dict__(),
-            "eval_name": self.eval_name,
             "system_prompt": self.api_connector.default_system_prompt
             if self.data_args.use_default_system_prompt
             else self.question_item.system_prompt,
@@ -125,9 +127,9 @@ class NeedleHaystackTester:
         outputs[HASH_CACHE_KEY] = get_hash(
             outputs,
             hash_cache_key=HASH_CACHE_KEY,
-            exclude_keys=["eval_name"],
         )
 
+        outputs["eval_name"] = self.eval_name
         results_for_all_depths = []
 
         results_path = f"{self.results_dir}/{self.eval_name}.json"
@@ -207,6 +209,8 @@ class NeedleHaystackTester:
                     temperature=self.model_args.temperature,
                     top_p=self.model_args.top_p,
                     use_default_system_prompt=self.data_args.use_default_system_prompt,
+                    pure_text=self.data_args.pure_text,
+                    render_args=self.render_args,
                 )
             )
 

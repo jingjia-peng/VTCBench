@@ -17,6 +17,7 @@ from google.genai import types
 from google.genai.errors import ClientError
 from langchain_aws import ChatBedrockConverse
 from openai import AsyncAzureOpenAI, AsyncOpenAI, RateLimitError
+from openai.types.chat import ChatCompletion
 from tenacity import (
     retry,
     retry_if_exception_message,
@@ -27,8 +28,10 @@ from tenacity import (
 )
 from transformers import AutoTokenizer
 from vertexai.preview.tokenization import get_tokenizer_for_model
+from deocr.engine.playwright.async_api import transform
+from deocr.engine.args import RenderArgs
 
-from .image_helper import ImagePayload
+from .image_helper import ImageTextPayload
 
 DEFAULT_TOKENIZER_MAPPING = {
     "gemini": "google",
@@ -196,11 +199,13 @@ class APIConnector:
     async def generate_response(
         self,
         system_prompt: str,
-        user_prompt: Union[str, List[str], ImagePayload],
+        user_prompt: Union[str, ImageTextPayload],
         max_tokens: int = 100,
         temperature: float = 0.0,
         top_p: float = 1.0,
         use_default_system_prompt: bool = True,
+        pure_text: bool = True,
+        render_args: RenderArgs | None = None,
     ) -> dict:
         """
         Generates a response using the API with the given prompts
@@ -215,28 +220,49 @@ class APIConnector:
         Returns:
             `dict`: Response from the API that includes the response, prompt tokens count, completion tokens count, total tokens count, and stopping reason
         """
-        messages = []
+        messages: list[dict] = []
         # formulate system prompt
         system_prompt = system_prompt.strip()
-        _given_sys_prompt_len = len(system_prompt)
 
+        # form system prompt
         if use_default_system_prompt and len(self.default_system_prompt) > 0:
             system_msg = {"role": "system", "content": self.default_system_prompt}
             messages.append(system_msg)
-        elif _given_sys_prompt_len > 0:
+        elif len(system_prompt) > 0:
             system_msg = {"role": "system", "content": system_prompt}
             messages.append(system_msg)
-        # no system prompt otherwise
+        else:
+            # no system prompt otherwise, allowed
+            pass
 
-        if isinstance(user_prompt, list):
-            for prompt in user_prompt:
-                messages.append({"role": "user", "content": prompt})
-        elif isinstance(user_prompt, ImagePayload):
+        # form user prompt
+        if isinstance(user_prompt, str) and (pure_text or render_args is None):
+            # plain text input
+            messages.append({"role": "user", "content": user_prompt})
+        elif isinstance(user_prompt, str):
+            payload = ImageTextPayload()
+            vision_part, text_part = user_prompt.split("\n\nQuestion:", 1)
+
+            payload.add_text(text_part)
+            images = await transform(
+                item=vision_part,
+                cache_dir=".cache",
+                render_args=render_args,
+            )
+            for image in images:
+                payload.add_image_adaptive(image)
+
+            messages.append(
+                {"role": "user", "content": payload.to_message_content()}
+            )
+        elif isinstance(user_prompt, ImageTextPayload):
             messages.append(
                 {"role": "user", "content": user_prompt.to_message_content()}
             )
         else:
-            messages.append({"role": "user", "content": user_prompt})
+            raise ValueError(f"Invalid: {type(user_prompt)}, {user_prompt}")
+
+        # call API with retries
         if (
             self.api_provider == "openai"
             or self.api_provider == "vllm"
@@ -249,7 +275,7 @@ class APIConnector:
                 retry=retry_if_exception_type(RateLimitError),
                 stop=stop_after_delay(300),
             )
-            async def generate_content():
+            async def generate_content() -> "ChatCompletion":
                 params = {"model": self.model, "messages": messages, "seed": 43}
                 if self.model_config.get("openai_thinking_model", False):
                     params["max_completion_tokens"] = max_tokens
