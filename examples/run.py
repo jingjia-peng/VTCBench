@@ -2,6 +2,7 @@ import json
 from copy import deepcopy
 from glob import iglob
 
+from deocr.engine.playwright.async_api import RenderArgs
 from jsonargparse import ArgumentParser
 
 # from tqdm.contrib.concurrent import process_map
@@ -10,10 +11,9 @@ from tqdm import tqdm
 from locoxim.args import DataArgs, ModelArgs, RunArgs
 from locoxim.async_evaluate import NeedleHaystackTester
 from locoxim.dataio import NeedleTestConfig
-from deocr.engine.playwright.async_api import RenderArgs
 
 
-def worker(kwargs):
+def _worker(kwargs):
     tester = NeedleHaystackTester(**kwargs)
     tester.evaluate()
 
@@ -22,7 +22,7 @@ def run_test(
     model_args: ModelArgs,
     data_args: DataArgs,
     run_args: RunArgs,
-    render_args: RenderArgs
+    render_args: RenderArgs,
 ):
     with open(data_args.needle_set_path, "r") as file:
         _raw_dict: list[dict] = json.load(file)
@@ -43,7 +43,6 @@ def run_test(
 
     tasks: list[dict] = []
     for haystack_path in iglob(f"{data_args.haystack_dir}/*"):
-        # increment base seed for every different haystack
         for question_item in questions:
             tasks.append(
                 {
@@ -51,14 +50,17 @@ def run_test(
                     "data_args": deepcopy(data_args),
                     "run_args": deepcopy(run_args),
                     "render_args": deepcopy(render_args),
+                    # below independent stuff
                     "question_item": question_item,
                     "haystack_path": haystack_path,
                 }
             )
+        # increment base seed for every different haystack
         run_args.base_seed = run_args.base_seed + 100
 
     for task in tqdm(tasks):
-        worker(task)
+        tester = NeedleHaystackTester(**task)
+        tester.evaluate()
 
 
 if __name__ == "__main__":
