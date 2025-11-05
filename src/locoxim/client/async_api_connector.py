@@ -8,18 +8,17 @@
 # credit: https://github.com/adobe-research/NoLiMa/blob/main/evaluation/async_api_connector.py
 
 from functools import cache
-from typing import Union
+from pprint import pprint
+from typing import TYPE_CHECKING, Union
 
 import httpx
 import tiktoken
-from deocr.engine.args import RenderArgs
 from deocr.engine.playwright.async_api import transform
 from google import genai
 from google.genai import types
 from google.genai.errors import ClientError
 from langchain_aws import ChatBedrockConverse
 from openai import AsyncAzureOpenAI, AsyncOpenAI, RateLimitError
-from openai.types.chat import ChatCompletion
 from tenacity import (
     retry,
     retry_if_exception_message,
@@ -32,6 +31,11 @@ from transformers import AutoTokenizer
 from vertexai.preview.tokenization import get_tokenizer_for_model
 
 from .image_helper import ImageTextPayload
+
+if TYPE_CHECKING:
+    from deocr.engine.args import RenderArgs
+    from openai.types.chat import ChatCompletion
+
 
 DEFAULT_TOKENIZER_MAPPING = {
     "gemini": "google",
@@ -51,8 +55,7 @@ class APIConnector:
         api_url (str): API URL for the LLM/VLM service
         api_provider (str): API provider type, e.g., openai, vllm
         model (str): Model name or path
-        system_prompt (str, optional): Default system prompt for the model. Default: "You
-        are a helpful assistant".
+        system_prompt (str, optional): Default system prompt for the model.
         tokenizer_type (str, optional): Type of tokenizer to use. Default: None.
         tokenizer_model (str, optional): Model path or local dir path for the tokenizer. Default: None.
         kwargs: Additional keyword arguments depending on the API provider
@@ -64,7 +67,7 @@ class APIConnector:
         api_url: str,
         api_provider: str,
         model: str,
-        system_prompt: str = "You are a helpful assistant",
+        system_prompt: str,
         tokenizer_type: str = None,
         tokenizer_model: str = None,
         **kwargs,
@@ -204,7 +207,8 @@ class APIConnector:
         use_default_system_prompt: bool = True,
         pure_text: bool = True,
         generation_kwargs: dict | None = None,
-        render_args: RenderArgs | None = None,
+        render_args: "RenderArgs" | None = None,
+        verbose: bool = False,
     ) -> dict:
         """
         Generates a response using the API with the given prompts
@@ -220,26 +224,33 @@ class APIConnector:
             `dict`: Response from the API that includes the response, prompt tokens count, completion tokens count, total tokens count, and stopping reason
         """
         messages: list[dict] = []
-        # formulate system prompt
-        system_prompt = system_prompt.strip()
 
         # form system prompt
+        system_prompt_content = None
+
+        # highest priority given to cmd line arg i.e. self.default_system_prompt
         if use_default_system_prompt and len(self.default_system_prompt) > 0:
-            system_msg = {"role": "system", "content": self.default_system_prompt}
-            messages.append(system_msg)
-        elif len(system_prompt) > 0:
-            system_msg = {"role": "system", "content": system_prompt}
-            messages.append(system_msg)
-        else:
-            # no system prompt otherwise, allowed
-            pass
+            system_prompt_content = self.default_system_prompt
+        # fallback to function-scoped, i.e. the system_prompt field in data
+        elif len(system_prompt := system_prompt.strip()) > 0:
+            system_prompt_content = system_prompt
+
+        # add system prompt to messages, but deliberately optional
+        if system_prompt_content is not None:
+            messages.append({"role": "system", "content": system_prompt_content})
 
         # form user prompt
+        user_prompt_content = None
         if isinstance(user_prompt, str) and (pure_text or render_args is None):
             # plain text input
-            messages.append({"role": "user", "content": user_prompt})
+            user_prompt_content = user_prompt.strip()
         elif isinstance(user_prompt, str):
+            # multimodal input by guessing
             payload = ImageTextPayload()
+
+            # a bit of hard code, but fine for now
+            # if you run into errors here,
+            # consider add this delim to task_template
             vision_part, text_part = user_prompt.split("\n\nQuestion:", 1)
 
             payload.add_text(text_part)
@@ -251,13 +262,23 @@ class APIConnector:
             for image in images:
                 payload.add_image_adaptive(image)
 
-            messages.append({"role": "user", "content": payload.to_message_content()})
+            user_prompt_content = payload.to_message_content()
         elif isinstance(user_prompt, ImageTextPayload):
-            messages.append(
-                {"role": "user", "content": user_prompt.to_message_content()}
-            )
+            user_prompt_content = user_prompt.to_message_content()
         else:
             raise ValueError(f"Invalid: {type(user_prompt)}, {user_prompt}")
+
+        # add user prompt to messages
+        assert user_prompt_content is not None, "user_prompt_content is None"
+        messages.append({"role": "user", "content": user_prompt_content})
+
+        if verbose:
+            print("=== Raw User Prompt ===")
+            pprint(user_prompt)
+            print("=======================")
+            print("=== API Call Messages ===")
+            pprint(messages)
+            print("=========================")
 
         # call API with retries
         if (
@@ -300,6 +321,12 @@ class APIConnector:
                 output["reasoning_tokens"] = (
                     completion.usage.completion_tokens_details.reasoning_tokens
                 )
+
+            if verbose:
+                print("=== API Call Response ===")
+                pprint(output)
+                print("=========================")
+
             return output
 
         elif self.api_provider == "gemini":

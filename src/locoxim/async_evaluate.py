@@ -217,7 +217,7 @@ class NeedleHaystackTester:
                         "temperature": self.model_args.temperature,
                         "top_p": self.model_args.top_p,
                         "top_k": self.model_args.top_k,
-                    }
+                    },
                 )
             )
 

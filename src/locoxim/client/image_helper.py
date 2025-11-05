@@ -32,6 +32,12 @@ class ImageTextPayload:
 
         return self.payloads
 
+    def __str__(self):
+        return str(self.payloads)
+
+    def __repr__(self) -> str:
+        return repr(self.payloads)
+
 
 def image_path_to_data_url(image_path: str, ext: str = None) -> str:
     """Convert an image file to a data URL.
