@@ -1,4 +1,4 @@
-# for debugging, saves intermediate pdfs, jpgs
+# default arguments yml
 pagesize:
   - 896
   - 896
@@ -9,7 +9,7 @@ marginBottom: 20
 forceOnePage: false
 autoAdjustHeight: false
 savePDF: false
-saveImage: true
+saveImage: false
 dpi: 96
 overwrite: false
 save_format: "jpeg"

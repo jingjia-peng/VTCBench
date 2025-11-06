@@ -3,8 +3,6 @@ from io import BytesIO
 
 from PIL import Image as PILImage
 
-from ..defaults import PIL_SAVE_FORMAT, PIL_SAVE_KWARGS
-
 
 class ImageTextPayload:
     # for the "content" field in chat messages, but only for image data
@@ -16,11 +14,18 @@ class ImageTextPayload:
     def add_text(self, text: str):
         self.payloads.append({"type": "text", "text": text.strip()})
 
-    def add_image_adaptive(self, image: bytes | str | PILImage.Image, ext: str = None):
+    def add_image_adaptive(
+        self,
+        image: bytes | str | PILImage.Image,
+        save_format: str = None,
+        save_kwargs: dict = None,
+    ):
         self.payloads.append(
             {
                 "type": "image_url",
-                "image_url": {"url": adaptive_image_to_data_url(image, ext)},
+                "image_url": {
+                    "url": adaptive_image_to_data_url(image, save_format, save_kwargs)
+                },
             }
         )
 
@@ -39,44 +44,41 @@ class ImageTextPayload:
         return repr(self.payloads)
 
 
-def image_path_to_data_url(image_path: str, ext: str = None) -> str:
+def image_path_to_data_url(image_path: str) -> str:
     """Convert an image file to a data URL.
 
     Args:
         image_path (str): The path to the image file.
-        ext (optional, str): The image file extension (e.g., "jpeg", "png"). If None, it will be inferred from the file name.
 
     Returns:
         str: data‑URL string, e.g. "data:<mime>;base64,<payload>"
     """
-    if ext is None:
-        ext = image_path.split(".")[-1]
+    ext = image_path.split(".")[-1]
 
     with open(image_path, "rb") as image_file:
         return image_bytes_to_data_url(image_file.read(), ext)
 
 
 def image_object_to_data_url(
-    image_object: PILImage.Image, ext: str = PIL_SAVE_FORMAT
+    image_object: PILImage.Image, save_format: str, save_kwargs: dict = None
 ) -> str:
     """Convert an image object to a data URL.
 
     Args:
         image_object (PIL.Image.Image): The pillow image object.
-        ext (str): The image file extension (e.g., "jpeg", "png").
+        save_format (str): The image file extension (e.g., "jpeg", "png").
 
     Returns:
         str: data‑URL string, e.g. "data:<mime>;base64,<payload>"
     """
     # special case for jpg -> pillow's jpeg
-    if ext == "jpg":
-        ext = "jpeg"
+    if save_format == "jpg":
+        save_format = "jpeg"
 
-    kwargs = PIL_SAVE_KWARGS.get(ext.lower(), {})
     with BytesIO() as buffered:
-        image_object.save(buffered, format=ext.upper(), **kwargs)
+        image_object.save(buffered, format=save_format.upper(), **(save_kwargs or {}))
         bs = buffered.getvalue()
-    return image_bytes_to_data_url(bs, ext)
+    return image_bytes_to_data_url(bs, save_format)
 
 
 def image_bytes_to_data_url(image_bytes: bytes, ext: str) -> str:
@@ -95,7 +97,9 @@ def image_bytes_to_data_url(image_bytes: bytes, ext: str) -> str:
 
 
 def adaptive_image_to_data_url(
-    image: bytes | str | PILImage.Image, ext: str = None
+    image: bytes | str | PILImage.Image,
+    save_format: str = None,
+    save_kwargs: dict = None,
 ) -> str:
     r"""Resize the image if larger than max_size and convert to data URL.
 
@@ -108,13 +112,15 @@ def adaptive_image_to_data_url(
     """
     if isinstance(image, bytes):
         # ext must be provided, no guessing
-        assert ext is not None
-        return image_bytes_to_data_url(image, ext)
+        assert save_format is not None
+        return image_bytes_to_data_url(image, save_format)
     elif isinstance(image, str):
         # ext optional, prefer to be infered from file ext
-        return image_path_to_data_url(image, ext)
+        return image_path_to_data_url(image, save_format)
     elif isinstance(image, PILImage.Image):
         # no ext needed, default to jpeg
-        return image_object_to_data_url(image)
+        return image_object_to_data_url(image, save_format, save_kwargs)
 
-    raise NotImplementedError(f"Unsupported image input {image} with ext {ext}.")
+    raise NotImplementedError(
+        f"Unsupported image input {image} with ext {save_format}."
+    )

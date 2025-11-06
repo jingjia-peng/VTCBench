@@ -205,7 +205,7 @@ class NeedleHaystackTester:
 
             async_tasks.append(
                 self.api_connector.generate_response(
-                    system_prompt=self.model_args.system_prompt,
+                    system_prompt=self.question_item.system_prompt,
                     user_prompt=filled_template,
                     max_tokens=self.model_args.max_tokens,
                     use_default_system_prompt=self.data_args.use_default_system_prompt,

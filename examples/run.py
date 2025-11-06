@@ -35,8 +35,6 @@ def run_test(
         question
         for test_config in experiment_config
         for question in test_config.iter_question_items(
-            default_system_prompt=model_args.system_prompt,
-            default_task_template=data_args.task_template,
             base_seed=run_args.base_seed,
         )
     ]

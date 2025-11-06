@@ -201,7 +201,7 @@ class APIConnector:
 
     async def generate_response(
         self,
-        system_prompt: str,
+        system_prompt: str | None,
         user_prompt: Union[str, ImageTextPayload],
         max_tokens: int = 100,
         use_default_system_prompt: bool = True,
@@ -229,10 +229,10 @@ class APIConnector:
         system_prompt_content = None
 
         # highest priority given to cmd line arg i.e. self.default_system_prompt
-        if use_default_system_prompt and len(self.default_system_prompt) > 0:
+        if use_default_system_prompt:
             system_prompt_content = self.default_system_prompt
         # fallback to function-scoped, i.e. the system_prompt field in data
-        elif len(system_prompt := system_prompt.strip()) > 0:
+        elif system_prompt is not None and len(system_prompt.strip()) > 0:
             system_prompt_content = system_prompt
 
         # add system prompt to messages, but deliberately optional
@@ -253,15 +253,19 @@ class APIConnector:
             # consider add this delim to task_template
             vision_part, text_part = user_prompt.split("\n\nQuestion:", 1)
 
-            payload.add_text(text_part)
             images = await transform(
                 item=vision_part,
                 cache_dir=".cache",
                 render_args=render_args,
             )
             for image in images:
-                payload.add_image_adaptive(image)
+                payload.add_image_adaptive(
+                    image,
+                    save_format=render_args.save_format,
+                    save_kwargs=render_args.save_kwargs,
+                )
 
+            payload.add_text(text_part)
             user_prompt_content = payload.to_message_content()
         elif isinstance(user_prompt, ImageTextPayload):
             user_prompt_content = user_prompt.to_message_content()

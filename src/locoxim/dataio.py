@@ -120,16 +120,16 @@ class NeedleTestConfig:
 
     def iter_question_items(
         self,
-        default_system_prompt: str | None = None,
-        default_task_template: str | None = None,
         base_seed: int = 42,
     ) -> Generator["QuestionItem", None, None]:
         for question_batch_type, question_batch_template in self.questions.items():
             for question_batch_id, question_batch_kwargs in self.tests.items():
                 yield QuestionItem.from_template_with_placeholders(
                     test_id=self.id,
-                    system_prompt=default_system_prompt or self.system_prompt,
-                    task_template=default_task_template or self.task_template,
+                    system_prompt=None
+                    if self.system_prompt is None
+                    else self.system_prompt.strip(),
+                    task_template=self.task_template,
                     question_batch_id=question_batch_id,
                     question_batch_type=question_batch_type,
                     question_batch_template=question_batch_template,
@@ -196,7 +196,7 @@ class QuestionItem:
         cls,
         test_id: str,
         system_prompt: str | None,
-        task_template: str,
+        task_template: str | None,
         # args for each question
         question_batch_id: str,
         question_batch_type: str,
