@@ -26,6 +26,7 @@ class ImageTextPayload:
                 "image_url": {
                     "url": adaptive_image_to_data_url(image, save_format, save_kwargs)
                 },
+                "detail": "high",
             }
         )
 
