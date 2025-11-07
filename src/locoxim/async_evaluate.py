@@ -81,7 +81,7 @@ class NeedleHaystackTester:
 
     @property
     def results_dir(self) -> str:
-        return f"{self.run_args.parent_results_dir}/{get_hash(args_to_dict(self.data_args) | args_to_dict(self.model_args) | args_to_dict(self.render_args))}"
+        return f"{self.run_args.parent_results_dir}/{self.model_args.model}/{get_hash(args_to_dict(self.data_args) | args_to_dict(self.model_args) | args_to_dict(self.render_args))}"
 
     def _evaluate_response(self, response: str, gold_answers: list[str] = None) -> int:
         if gold_answers is None:
