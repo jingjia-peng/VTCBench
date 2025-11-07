@@ -99,6 +99,8 @@ class APIConnector:
             self.api = AsyncOpenAI(
                 api_key=api_key,
                 base_url=api_url,
+                max_retries=kwargs["max_retries"],
+                timeout=kwargs["timeout"],
             )
         elif api_provider == "azure-openai":
             self.api = AsyncAzureOpenAI(
@@ -302,6 +304,8 @@ class APIConnector:
                 if self.model_config.get("openai_thinking_model", False):
                     # thinking models, e.g. GPT-5 use another set of params
                     params["max_completion_tokens"] = max_tokens
+                    params["reasoning_effort"] = "minimal"
+                    params["verbosity"] = "low"
                 else:
                     params["max_tokens"] = max_tokens
                     params = params | (generation_kwargs or {})

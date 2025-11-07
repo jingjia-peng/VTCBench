@@ -34,6 +34,12 @@ class ModelArgs:
         default="vllm",
         metadata={"help": "API provider type, e.g., openai, vllm, etc."},
     )
+    openai_thinking_model: Optional[bool] = field(
+        default=False,
+        metadata={
+            "help": "Enables special kwargs handling for OpenAI models, e.g. gpt-5",
+        },
+    )
 
     # model configs
     max_tokens: int = field(

@@ -3,6 +3,7 @@
 	"api_key": "EMPTY",
 	"api_url": "https://localhost:8001/v1",
 	"api_provider": "openai",
+	"openai_thinking_model": true,
 	"max_tokens": 192,
 	"temperature": 0.000001,
 	"timeout": 30,
