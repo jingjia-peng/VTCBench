@@ -110,13 +110,12 @@ def prepare_context(conversation: dict[str, str | list[str]]) -> str:
         if session_key not in conversation:
             break
 
-        out += f"<div class='timestamp'>{conversation[session_dt_key]}</div>"
         out += "<div class='session'>"
+        out += f"<span class='timestamp'>{conversation[session_dt_key]}</span>"
         for turn in conversation[session_key]:  # type: ignore
             out += dialogue_to_text(turn["speaker"], turn["dia_id"], turn["text"])
         out += "</div>"
     return out
-
 
 
 if __name__ == "__main__":
