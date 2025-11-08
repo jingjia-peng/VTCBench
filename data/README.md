@@ -48,8 +48,10 @@ python prepare.py \
 Download via [Hugging Face][hfnolima]:
 
 ```sh
-hf download --repo-type dataset amodaresi/NoLiMa --local-dir /path/to/local/folder
+hf download --repo-type dataset amodaresi/NoLiMa --local-dir data/NoLiMa
 ```
+
+<details><summary>Optionally, if you have a custom path</summary>
 
 Modify config file path accordingly: [config/data/nolima.json](../config/data/nolima.json).
 
@@ -61,13 +63,31 @@ Modify config file path accordingly: [config/data/nolima.json](../config/data/no
 }
 ```
 
+</details>
+
 ## LoCoMo
 
 Download from [Github](https://github.com/snap-research/locomo)
 
 ```sh
-wget https://github.com/snap-research/locomo/blob/main/data/locomo10.json
+mkdir -p data/LoCoMo
+wget -P data/LoCoMo https://github.com/snap-research/locomo/blob/main/data/locomo10.json
+python examples/convert.py data/LoCoMo/locomo10.json
 ```
+
+<details><summary>Optionally, if you have a custom path</summary>
+
+Modify config file path accordingly: [config/data/locomo.json](../config/data/locomo.json).
+
+```json
+{
+  "needle_set_path": "data/LoCoMo/needlesets/4_SingleHop.json",
+  "haystack_dir": "data/LoCoMo/haystack",
+  "...": "..."
+}
+```
+
+</details>
 
 [gitruler]: https://github.com/NVIDIA/RULER
 [gitrulerLCS]: https://github.com/NVIDIA/RULER/blob/main/LICENSE

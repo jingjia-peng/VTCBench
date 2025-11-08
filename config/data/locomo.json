@@ -1,0 +1,7 @@
+{
+	"needle_set_path": "data/LoCoMo/needlesets/4_SingleHop.json",
+	"haystack_dir": "data/LoCoMo/haystack",
+	"task_template": "{haystack}\n\nQuestion: Answer a question based on the above book snippet. Your answer should be short and based on either explicitly stated facts or strong, logical inferences. Return only the final answer with no additional explanation or reasoning.\n\n{question}",
+	"use_default_system_prompt": true,
+	"pure_text": false
+}
