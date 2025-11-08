@@ -122,7 +122,7 @@ class BookHaystack:
 
     def generate_w_needle_placement(
         self,
-        needle: str,
+        needle: str | None,
         token_counter: TokenCounter,
         context_length: int,
         shift: int = 0,
@@ -131,6 +131,18 @@ class BookHaystack:
         distractor: Union[str, None] = None,
         distractor_free_zone: float = 0.2,
     ) -> dict:
+        # dont need needle placement
+        if needle is None:
+            if self.token_depth is None:
+                self.token_depth = token_counter.token_count(self.text)
+            return {
+                "text": self.text,
+                "static_depth": None,
+                "token_depth": self.token_depth,
+                "depth": None,
+                "context_length_wo_needle": self.token_depth,
+            }
+
         # no distractor, use needle
         if distractor is None:
             return self._generate_w_needle_placement(

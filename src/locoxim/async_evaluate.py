@@ -152,7 +152,13 @@ def evaluate(
     ):
         needle = question_item.needle
         retrieval_question = question_item.retrieval_question
-        if "{CHAR}" in needle:
+
+        selected_character = None
+        if needle is None:
+            # allow needle to be None, n=1, skip 2nd onwards
+            if _needle_depth_i != 0:
+                continue
+        elif has_placeholder(needle, "{CHAR}"):
             assert isinstance(question_item.character_set, list), (
                 f"character_set {type(question_item.character_set)} != list"
             )
@@ -160,10 +166,8 @@ def evaluate(
             # for reproducibility, changing with depth, but always the same sequence for a given seed
             selected_character = str(rng.choice(question_item.character_set))
             needle = fill_placeholders(needle, "{CHAR}", selected_character)
-        else:
-            selected_character = None
 
-        if has_placeholder(retrieval_question):
+        if has_placeholder(retrieval_question, "{CHAR}"):
             assert selected_character is not None, (
                 "selected_character is None but retrieval_question has placeholder"
             )
