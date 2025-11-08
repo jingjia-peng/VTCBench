@@ -139,14 +139,12 @@ class BookHaystack:
         if needle is None:
             # context from needle config, use it directly and ignore self.text
             assert context is not None
-            if self.token_depth is None:
-                self.token_depth = token_counter.token_count(context)
             return {
                 "text": context,
                 "static_depth": None,
-                "token_depth": self.token_depth,
+                "token_depth": None,
                 "depth": None,
-                "context_length_wo_needle": self.token_depth,
+                "context_length_wo_needle": None,
             }
 
         # no distractor, use needle

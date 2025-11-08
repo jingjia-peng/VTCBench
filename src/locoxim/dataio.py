@@ -133,8 +133,8 @@ class NeedleTestConfig:
     Args:
         id (str): Unique ID for the test.
         reasoning_type (str): Type of reasoning ability being tested (e.g., world knowledge).
-        system_prompt (str | None): Optional system prompt override.
-        task_template (str): Template for the task, filled with needle and question.
+        system_prompt (Optional[str]): Optional system prompt override.
+        task_template (Optional[str]): Template for the task, filled with needle and question.
         needle (str): Template for the needle.
         questions (dict[str, str]): Mapping from question type/difficulty to question templates, e.g. one-hop, two-hop.
         character_set (list[str] | None): List of characters for needle placement.
@@ -144,15 +144,15 @@ class NeedleTestConfig:
 
     id: str
     reasoning_type: str
-    system_prompt: str | None
-    task_template: str
+    system_prompt: Optional[str]
+    task_template: Optional[str]
     needle: str
     questions: dict[str, str]
     character_set: list[str] | None
     # tests: {"test_id": {"input_args": [...]}}
     tests: dict[str, dict[str, list]]
     distractors: dict[str, str] | None = None
-    context: str | None = None
+    context: Optional[str] = None
 
 
 @dataclass
@@ -163,7 +163,7 @@ class QuestionItem:
     Args:
         question_id (str): Unique ID for the question.
         system_prompt (Optional[str]): System prompt for the model.
-        task_template (str): Task template for the question.
+        task_template (Optional[str]): Task template for the question.
         needle (Optional[str]): Needle string to fill in haystack; None if no needle placement.
         retrieval_question (str): Question string with placeholders filled.
         gold_answers (Optional[list[str]]): Correct answers for evaluation.
@@ -174,7 +174,7 @@ class QuestionItem:
 
     question_id: str
     system_prompt: Optional[str]
-    task_template: str
+    task_template: Optional[str]
 
     needle: Optional[str]
     retrieval_question: str
@@ -189,18 +189,19 @@ class QuestionItem:
     def from_template_with_placeholders(
         cls,
         test_id: str,
-        system_prompt: str | None,
-        task_template: str | None,
+        system_prompt: Optional[str],
+        task_template: Optional[str],
         # args for each question
         question_batch_id: str,
         question_batch_type: str,
         question_batch_template: str,
         question_batch_args: list[str],
-        needle_template: str,
+        needle_template: Optional[str],
         gold_answers: Optional[list[str]],
         base_seed: int,
         character_set: Optional[list[str]] = None,
         distractor_template: Optional[str] = None,
+        context: Optional[str] = None,
     ) -> "QuestionItem":
         # fill in the placeholders, taking question_args one by one
         for argc, argv in enumerate(question_batch_args):
@@ -208,7 +209,8 @@ class QuestionItem:
             question_batch_template = fill_placeholders(
                 question_batch_template, _place_holder, argv
             )
-            needle_template = fill_placeholders(needle_template, _place_holder, argv)
+            if needle_template is not None:
+                needle_template = fill_placeholders(needle_template, _place_holder, argv)
 
             if distractor_template is not None:
                 distractor_template = fill_placeholders(
@@ -228,5 +230,6 @@ class QuestionItem:
                 base_seed + hash(f"{test_id}_{question_batch_id}_{question_batch_type}")
             )
             % (2**32),
+            context=context,
         )
         return new_item
