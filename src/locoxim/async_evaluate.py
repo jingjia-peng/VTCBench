@@ -30,12 +30,9 @@ from .dataio import (
     dataclass_to_dict,
     fill_placeholders,
     get_hash,
+    has_placeholder,
 )
 from .NoLiMa.book_haystack import BookHaystack
-
-
-def has_placeholder(text: str, placeholder: str = "{CHAR}") -> bool:
-    return placeholder in text
 
 
 def scan_dir_for_hash(

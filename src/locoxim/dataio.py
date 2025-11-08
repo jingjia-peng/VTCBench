@@ -16,6 +16,10 @@ def dataclass_to_dict(instance) -> dict:
     }
 
 
+def has_placeholder(text: str, placeholder: str = "{CHAR}") -> bool:
+    return placeholder in text
+
+
 def fill_placeholders(template: str, placeholder: str, value: str) -> str:
     # try to replace this placeholder in the template
     if placeholder in template:
