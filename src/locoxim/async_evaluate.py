@@ -16,6 +16,7 @@ from typing import Literal
 
 import numpy as np
 from deocr.engine.playwright.async_api import RenderArgs
+from rouge_score import rouge_scorer
 
 from .args import (
     DataArgs,
@@ -54,30 +55,53 @@ def scan_dir_for_hash(
 def _evaluate_response(
     response: str,
     gold_answers: list[str],
-    metric: Literal["EM", "contains", "lastline_EM", "lastline_contains"],
-) -> int:
+    metric: list[
+        Literal["EM", "contains", "lastline_EM", "lastline_contains", "ROUGE-L"]
+    ] = None,
+) -> dict[str, float | int]:
     assert gold_answers is not None and len(gold_answers) > 0, (
         "gold_answers is None or empty"
     )
 
-    match metric:
-        case "EM":
-            return int(response.strip() in gold_answers)
-        case "contains":
-            return int(any([gold_answer in response for gold_answer in gold_answers]))
-        case "lastline_EM":
-            return int(response.strip().split("\n")[-1] in gold_answers)
-        case "lastline_contains":
-            return int(
-                any(
-                    [
-                        gold_answer in response.strip().split("\n")[-1]
-                        for gold_answer in gold_answers
-                    ]
+    if metric is None:
+        metric = ["EM", "contains", "lastline_EM", "lastline_contains", "ROUGE-L"]
+    elif isinstance(metric, str):
+        metric = [metric]
+
+    scores = {}
+    for each_metric in metric:
+        match each_metric:
+            case "EM":
+                scores[each_metric] = int(response.strip() in gold_answers)
+            case "contains":
+                scores[each_metric] = int(
+                    any([gold_answer in response for gold_answer in gold_answers])
                 )
-            )
-        case _:
-            raise ValueError(f"Invalid metric: {metric}")
+            case "lastline_EM":
+                scores[each_metric] = int(
+                    response.strip().split("\n")[-1] in gold_answers
+                )
+            case "lastline_contains":
+                scores[each_metric] = int(
+                    any(
+                        [
+                            gold_answer in response.strip().split("\n")[-1]
+                            for gold_answer in gold_answers
+                        ]
+                    )
+                )
+            case "ROUGE-L":
+                scorer = rouge_scorer.RougeScorer(["rougeL"], use_stemmer=True)
+                if len(gold_answers) == 0:
+                    scores[each_metric] = 0.0
+                else:
+                    scores[each_metric] = max(
+                        s["rougeL"].fmeasure
+                        for s in [scorer.score(response, ref) for ref in gold_answers]
+                    )
+            case _:
+                raise ValueError(f"Invalid metric: {each_metric}")
+    return scores
 
 
 def evaluate(
@@ -231,7 +255,6 @@ def evaluate(
         results_for_all_depths[_res_i]["metric"] = _evaluate_response(
             _res["response"],
             gold_answers=results_for_all_depths[_res_i]["gold_answers"],
-            metric=run_args.metric,
         )
         results_for_all_depths[_res_i] = results_for_all_depths[_res_i] | _res
         api_cache_io(_res["api_cache_path"], save_response=_res)
