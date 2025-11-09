@@ -210,7 +210,9 @@ class QuestionItem:
                 question_batch_template, _place_holder, argv
             )
             if needle_template is not None:
-                needle_template = fill_placeholders(needle_template, _place_holder, argv)
+                needle_template = fill_placeholders(
+                    needle_template, _place_holder, argv
+                )
 
             if distractor_template is not None:
                 distractor_template = fill_placeholders(

@@ -1,10 +1,11 @@
+import json
 import os
 import os.path as osp
 import sys
-import json
-
 from typing import TypedDict
+
 from locoxim.dataio import NeedleTestConfig, dataclass_to_dict
+
 
 class QA(TypedDict):
     question: str
@@ -12,10 +13,11 @@ class QA(TypedDict):
     evidence: list[str]
     category: int
 
+
 class LoCoMoFormat(TypedDict):
     qa: list[QA]
     conversation: dict[str, str | list[str]]
-    '''
+    """
     "conversation": {
       "speaker_a": "Caroline",
       "speaker_b": "Melanie",
@@ -36,7 +38,7 @@ class LoCoMoFormat(TypedDict):
           "dia_id": "D1:3",
           "text": "I went to a LGBTQ support group yesterday and it was so powerful."
         },
-    '''
+    """
     sample_id: str
     observation: dict
     session_summary: str
@@ -132,7 +134,7 @@ if __name__ == "__main__":
             f"{needleset_dir}/{category_id}_{LOCOMO_CATEGORIES[category_id]}.json"
         )
         with open(out_path, "w") as f:
-            json.dump(d, f, indent='\t')
+            json.dump(d, f, indent="\t")
 
     haystack_dir = f"{dirname}/haystack/"
     os.makedirs(haystack_dir, exist_ok=True)
