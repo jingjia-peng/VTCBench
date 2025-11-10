@@ -67,9 +67,16 @@ if __name__ == "__main__":
                 "ROUGE-L": "mean",
                 "json_id": "count",
                 "context_length": "mean",
+                "needle_set_path": "first"
             }
         )
         .reset_index()
     )
+    df[["EM", "contains", "ROUGE-L"]] = df[
+        ["EM", "contains", "ROUGE-L"]
+    ] * 100.0
+    df[["EM", "contains", "ROUGE-L"]] = df[
+        ["EM", "contains", "ROUGE-L"]
+    ].round(2)
     df.to_json("all_results.jsonl", index=False, lines=True, orient="records")
     print(df.set_index("collection_id"))
