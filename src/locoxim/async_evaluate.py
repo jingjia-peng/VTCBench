@@ -119,13 +119,14 @@ def evaluate(
     api_connector = APIConnector(**args_to_dict(model_args))
     haystack = BookHaystack(haystack_path)
 
+    path_friendly_model_name = model_args.model.replace("/", "_").replace("-", "_")
     eval_name = (
-        f"{model_args.model}_book_{question_item.question_id}_{int(time.time())}"
+        f"{path_friendly_model_name}_book_{question_item.question_id}_{int(time.time())}"
         if question_item.question_id != ""
-        else f"{model_args.model}_book_{int(time.time())}"
+        else f"{path_friendly_model_name}_book_{int(time.time())}"
     )
 
-    results_dir = f"{run_args.parent_results_dir}/{model_args.model}/{get_hash(args_to_dict(data_args) | args_to_dict(model_args) | args_to_dict(render_args))}"
+    results_dir = f"{run_args.parent_results_dir}/{path_friendly_model_name}/{get_hash(args_to_dict(data_args) | args_to_dict(model_args) | args_to_dict(render_args))}"
     os.makedirs(results_dir, exist_ok=True)
 
     outputs = {
