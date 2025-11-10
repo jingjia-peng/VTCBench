@@ -8,7 +8,7 @@
 #SBATCH -t 30-00:00:00
 #SBATCH -J Qwen2.5-VL-7B-Instruct
 #SBATCH --ntasks=1
-#SBATCH --array=0-3%1
+#SBATCH --array=0-5%1
 
 # get id from slurm, 1-4
 # if you are not from slurm, write a script that export it, like
@@ -22,17 +22,29 @@
 # export SLURM_ARRAY_TASK_ID=0
 task_id=${SLURM_ARRAY_TASK_ID}
 
+# one to one
 LEN_ARR=(
     1000
     2000
     4000
     8000
+    #16000
+    32000
+)
+RENDER_CONFIG=(
+    config/render/default.yml
+    config/render/default.yml
+    config/render/default.yml
+    config/render/default.yml
+    #config/render/16k.yml
+    config/render/32k.yml
 )
 
 set -x
 
 # for this job, get length, e.g. 1000 for 1st job
 LEN=${LEN_ARR[$task_id]}
+RENDER=${RENDER_CONFIG[$task_id]}
 
 # smoke test if the llm server is alive
 if nc -z localhost 1026; then
@@ -64,6 +76,6 @@ MODELID=$SLURM_JOB_NAME
 uv run examples/run.py \
     --model config/model/qwen_2.5_vl_7b.json \
     --data config/data/nolima.json \
-    --render config/render/default.yml \
+    --render ${RENDER} \
     --data.context_length ${LEN} \
     # --model.model ${MODELID} # optional, override model id in json config
