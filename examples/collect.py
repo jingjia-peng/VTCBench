@@ -76,5 +76,7 @@ if __name__ == "__main__":
         df[["EM", "contains", "ROUGE-L"]] * 100.0
     ).round(2)
     df.to_json("all_results.jsonl", index=False, lines=True, orient="records")
-    with pd.option_context("display.max_rows", None, "display.max_columns", None):
+    with pd.option_context(
+        "display.max_rows", None, "display.max_columns", None, "display.width", 200
+    ):
         print(df.set_index("collection_id"))

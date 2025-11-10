@@ -12,11 +12,9 @@ from typing import TYPE_CHECKING, Optional, Union
 
 from deocr.engine.playwright.async_api import transform
 from langchain_aws import ChatBedrockConverse
-from openai import AsyncAzureOpenAI, AsyncOpenAI, RateLimitError
+from openai import AsyncAzureOpenAI, AsyncOpenAI
 from tenacity import (
     retry,
-    retry_if_exception_message,
-    retry_if_exception_type,
     stop_after_delay,
     wait_random,
 )
@@ -233,7 +231,6 @@ class APIConnector:
             @retry(
                 reraise=True,
                 wait=wait_random(1, 20),
-                retry=retry_if_exception_type(RateLimitError),
                 stop=stop_after_delay(300),
             )
             async def generate_content() -> "ChatCompletion":
@@ -300,7 +297,6 @@ class APIConnector:
             @retry(
                 reraise=True,
                 wait=wait_random(5, 20),
-                retry=retry_if_exception_message(match=r".*ThrottlingException.*"),
             )
             async def generate_content():
                 completion = await self.api.ainvoke(messages)

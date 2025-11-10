@@ -99,8 +99,8 @@ def prepare_configs(
     return needles
 
 
-def dialogue_to_text(speaker: str, dia_id: str, text: str) -> str:
-    return f"<span class='dialogue' data-speaker='{speaker}' data-dia-id='{dia_id}'>{text}</span>"
+def dialogue_to_text(speaker: str, dia_id: str, text: str, blip_caption: str) -> str:
+    return f"<span class='dialogue' data-speaker='{speaker}' data-dia-id='{dia_id}'>\[{blip_caption}\]. {text}</span>"
 
 
 def prepare_context(conversation: dict[str, str | list[str]]) -> str:
@@ -115,7 +115,9 @@ def prepare_context(conversation: dict[str, str | list[str]]) -> str:
         out += "<div class='session'>"
         out += f"<span class='timestamp'>{conversation[session_dt_key]}</span>"
         for turn in conversation[session_key]:  # type: ignore
-            out += dialogue_to_text(turn["speaker"], turn["dia_id"], turn["text"])
+            out += dialogue_to_text(
+                turn["speaker"], turn["dia_id"], turn["text"], turn.get("blip_caption", '')
+            )
         out += "</div>"
     return out
 
