@@ -232,6 +232,8 @@ def evaluate(
                     "temperature": model_args.temperature,
                     "top_p": model_args.top_p,
                 },
+                extra_kwargs=model_args.extra_kwargs,
+                use_cache=run_args.enable_api_cache,
                 verbose=verbose and (_needle_depth_i == 0),
             )
         )

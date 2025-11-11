@@ -120,7 +120,9 @@ class APIConnector:
         use_default_system_prompt: bool = True,
         pure_text: bool = True,
         generation_kwargs: Optional[dict] = None,
+        extra_kwargs: Optional[dict] = None,
         render_args: Optional["RenderArgs"] = None,
+        use_cache: bool = True,
         verbose: bool = False,
     ) -> dict:
         """
@@ -152,7 +154,7 @@ class APIConnector:
                 "model": self.model,
             }
         )
-        if (response := api_cache_io(cache_path)) is not None:
+        if use_cache and (response := api_cache_io(cache_path)) is not None:
             if verbose:
                 print("=== API Call Cached Response ===")
                 pprint(response)
@@ -256,6 +258,7 @@ class APIConnector:
                 else:
                     params["max_tokens"] = max_tokens
                     params = params | (generation_kwargs or {})
+                    params["extra_body"] = extra_kwargs
 
                 try:
                     completion = await self.api.chat.completions.create(**params)

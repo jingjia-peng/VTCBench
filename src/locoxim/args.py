@@ -55,6 +55,10 @@ class ModelArgs:
         default=None,
         metadata={"help": "Top-p sampling parameter"},
     )
+    extra_kwargs: Optional[dict] = field(
+        default=None,
+        metadata={"help": "Additional sampling kwargs for generation"},
+    )
     system_prompt: Optional[str] = field(
         default="You are a helpful assistant.",
         metadata={"help": "Default system prompt for the model"},
@@ -166,10 +170,14 @@ class RunArgs:
     prevent_duplicate_tests: bool = field(
         default=False,
         metadata={
-            "help": "Prevent duplicate tests in the evaluation by scanning other parallel results. Warning: this slows down evaluation significantly."
+            "help": "Prevent duplicate tests in the evaluation by scanning other results. Warning: this slows down evaluation significantly."
         },
     )
     num_workers: int = field(
         default=1,
         metadata={"help": "Number of parallel workers for evaluation"},
+    )
+    enable_api_cache: bool = field(
+        default=True,
+        metadata={"help": "Enable caching of API responses to avoid redundant calls"},
     )
