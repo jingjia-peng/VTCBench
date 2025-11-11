@@ -58,9 +58,9 @@ class APIConnector:
         api_url: str,
         api_provider: str,
         model: str,
-        system_prompt: str,
-        tokenizer_type: str = None,
-        tokenizer_model: str = None,
+        system_prompt: str | None,
+        tokenizer_type: str | None = None,
+        tokenizer_model: str | None = None,
         **kwargs,
     ) -> None:
         assert api_provider in DEFAULT_TOKENIZER_MAPPING, (
@@ -78,7 +78,7 @@ class APIConnector:
             tokenizer_model=tokenizer_model or model,
         )
 
-        self.default_system_prompt = system_prompt.strip()
+        self.default_system_prompt = None if system_prompt is None else system_prompt.strip()
 
         if api_provider == "openai":
             self.api = AsyncOpenAI(
