@@ -132,25 +132,26 @@ class NeedleTestConfig:
 
     Args:
         id (str): Unique ID for the test.
-        reasoning_type (str): Type of reasoning ability being tested (e.g., world knowledge).
+        reasoning_type (Optional[str]): Type of reasoning ability being tested (e.g., world knowledge).
         system_prompt (Optional[str]): Optional system prompt override.
         task_template (Optional[str]): Template for the task, filled with needle and question.
         needle (str): Template for the needle.
         questions (dict[str, str]): Mapping from question type/difficulty to question templates, e.g. one-hop, two-hop.
-        character_set (list[str] | None): List of characters for needle placement.
+        character_set (Optional[list[str]]): List of characters for needle placement.
         tests (dict[str, dict[str, list]]): Mapping from question IDs to their configurations.
         distractors (dict[str, str] | None): Optional mapping from distractor keys to templates.
+        context (Optional[str]): Optional context override, avoiding iterating through haystack. Useful if question is dependent on context, i.e. haystack.
     """
 
     id: str
-    reasoning_type: str
-    system_prompt: Optional[str]
-    task_template: Optional[str]
     needle: str
     questions: dict[str, str]
-    character_set: list[str] | None
-    # tests: {"test_id": {"input_args": [...]}}
     tests: dict[str, dict[str, list]]
+    reasoning_type: Optional[str] = None
+    system_prompt: Optional[str] = None
+    task_template: Optional[str] = None
+    character_set: Optional[list[str]] = None
+    # tests: {"test_id": {"input_args": [...]}}
     distractors: dict[str, str] | None = None
     context: Optional[str] = None
 
