@@ -20,10 +20,15 @@ def read_worker(fp: str) -> dict:
         json_data: dict = json.load(open(fp))
         results: list[dict] = json_data["results"]
         data_args: dict = json_data["data_args"]
+        model_id: str = json_data["model_args"]["model"]
         return [
-            {"collection_id": osp.dirname(fp), "json_id": osp.basename(fp)}
+            wrap_as_dict(result["metric"])
             | data_args
-            | wrap_as_dict(result["metric"])
+            | {
+                "collection_id": osp.dirname(fp),
+                "json_id": osp.basename(fp),
+                "model_id": model_id,
+            }
             for result in results
         ]
     assert False
@@ -69,15 +74,18 @@ if __name__ == "__main__":
                 "json_id": "count",
                 "context_length": "mean",
                 "needle_set_path": "first",
+                "model_id": "first",
             }
         )
         .reset_index()
     )
-    df[["EM", "contains", "ROUGE-L"]] = (
-        df[["EM", "contains", "ROUGE-L"]] * 100.0
+    df[["EM", "contains", "contains_all", "ROUGE-L"]] = (
+        df[["EM", "contains", "contains_all", "ROUGE-L"]] * 100.0
     ).round(2)
     df.to_json("all_results.jsonl", index=False, lines=True, orient="records")
     with pd.option_context(
         "display.max_rows", None, "display.max_columns", None, "display.width", 200
     ):
-        print(df.set_index("collection_id"))
+        print(
+            df.set_index(["model_id", "needle_set_path", "context_length"]).sort_index()
+        )
