@@ -80,6 +80,13 @@ def _evaluate_response(
                 scores[each_metric] = int(
                     any([f"{gold_answer}" in response for gold_answer in gold_answers])
                 )
+            case "contains_all":
+                # all gold answers should be contained in the response
+                # if so metric==1, can be fractional
+                scores[each_metric] = float(
+                    sum([f"{gold_answer}" in response for gold_answer in gold_answers])
+                    / len(gold_answers)
+                )
             case "lastline_EM":
                 scores[each_metric] = int(
                     response.strip().split("\n")[-1] in gold_answers
