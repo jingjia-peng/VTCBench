@@ -56,7 +56,14 @@ def _evaluate_response(
     response: str,
     gold_answers: list[str],
     metric: list[
-        Literal["EM", "contains", "lastline_EM", "lastline_contains", "ROUGE-L"]
+        Literal[
+            "EM",
+            "contains",
+            "contains_all",
+            "lastline_EM",
+            "lastline_contains",
+            "ROUGE-L",
+        ]
     ] = None,
 ) -> dict[str, float | int]:
     assert gold_answers is not None and len(gold_answers) > 0, (
@@ -67,7 +74,14 @@ def _evaluate_response(
     gold_answers = [str(ans).strip() for ans in gold_answers]
 
     if metric is None:
-        metric = ["EM", "contains", "lastline_EM", "lastline_contains", "ROUGE-L"]
+        metric = [
+            "EM",
+            "contains",
+            "contains_all",
+            "lastline_EM",
+            "lastline_contains",
+            "ROUGE-L",
+        ]
     elif isinstance(metric, str):
         metric = [metric]
 

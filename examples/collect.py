@@ -64,6 +64,7 @@ if __name__ == "__main__":
             {
                 "EM": "mean",
                 "contains": "mean",
+                "contains_all": "mean",
                 "ROUGE-L": "mean",
                 "json_id": "count",
                 "context_length": "mean",
