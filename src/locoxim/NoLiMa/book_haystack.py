@@ -192,12 +192,17 @@ class BookHaystack:
                 dist_depth,
                 static_depth,
             )
+            _text_w_distractor: str = placement_w_distractor["text"]
 
-            distr_char_pos = placement_w_distractor["text"].index(distractor)
-            distr_placement_findspan = (max(distr_char_pos - 50, 0), distr_char_pos - 1)
+            distr_char_pos = _text_w_distractor.index(distractor)
             if context_length < 500:
-                distr_placement_findspan = (
+                distr_placement_findspan = slice(
                     max(distr_char_pos - 25, 0),
+                    distr_char_pos - 1,
+                )
+            else:
+                distr_placement_findspan = slice(
+                    max(distr_char_pos - 50, 0),
                     distr_char_pos - 1,
                 )
 
@@ -209,28 +214,15 @@ class BookHaystack:
                 depth,
                 static_depth,
             )
+            _text_w_needle: str = placement_w_needle["text"]
 
-            if (
-                placement_w_needle["text"].count(
-                    placement_w_distractor["text"][
-                        distr_placement_findspan[0] : distr_placement_findspan[1]
-                    ]
-                )
-                > 1
-            ):
-                raise IndexError("Multiple spans found with same pre-distractor text")
-
-            distractor_loc = placement_w_needle["text"].index(
-                placement_w_distractor["text"][
-                    distr_placement_findspan[0] : distr_placement_findspan[1]
-                ]
+            distractor_loc = _text_w_needle.index(
+                _text_w_distractor[distr_placement_findspan]
             ) + (49 if context_length >= 500 else 23)
             placement_w_needle["text"] = (
-                placement_w_needle["text"][:distractor_loc]
-                + " "
-                + distractor
-                + "\n"
-                + placement_w_needle["text"][distractor_loc:]
+                _text_w_needle[:distractor_loc]
+                + f" {distractor}\n"
+                + _text_w_needle[distractor_loc:]
             )
             placement_w_needle["distractor_depth"] = dist_depth
             return placement_w_needle
