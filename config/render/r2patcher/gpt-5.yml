@@ -1,0 +1,4 @@
+pagesize:
+  - 768
+  - 768
+css: "p {font-size: 13.11px;}"

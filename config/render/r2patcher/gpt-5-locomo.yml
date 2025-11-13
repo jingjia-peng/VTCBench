@@ -1,0 +1,21 @@
+# default arguments yml
+pagesize:
+  - 768
+  - 768
+marginLeft: 0
+marginRight: 0
+marginTop: 0
+marginBottom: 0
+forceOnePage: false
+autoAdjustHeight: false
+savePDF: false
+saveImage: false
+dpi: 96
+overwrite: false
+save_format: "jpeg"
+save_kwargs:
+  quality: 50
+  optimize: true
+  subsampling: 2
+css: "span {font-size: 13.11px;} span.dialogue:nth-child(even) {background-color: lightgreen;} .timestamp {color: gray;} span + span {margin-left: 2px;} div + div {margin-top: .5em;} span.dialogue[data-speaker]:before {content: attr(data-speaker) ': ';font-weight: bold;}"
+css_path: null
