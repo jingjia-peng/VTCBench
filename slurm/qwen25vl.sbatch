@@ -28,7 +28,7 @@ LEN_ARR=(
     2000
     4000
     8000
-    #16000
+    16000
     32000
 )
 RENDER_CONFIG=(
@@ -36,7 +36,7 @@ RENDER_CONFIG=(
     config/render/default.yml
     config/render/default.yml
     config/render/default.yml
-    #config/render/16k.yml
+    config/render/16k.yml
     config/render/32k.yml
 )
 
@@ -78,4 +78,5 @@ uv run examples/run.py \
     --data config/data/nolima.json \
     --render ${RENDER} \
     --data.context_length ${LEN} \
+    $@
     # --model.model ${MODELID} # optional, override model id in json config

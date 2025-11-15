@@ -36,7 +36,7 @@ RENDER_CONFIG=(
     config/render/default.yml
     config/render/default.yml
     config/render/default.yml
-    config/render/16k.yml
+    config/render/32k.yml
     config/render/32k.yml
 )
 
@@ -73,10 +73,13 @@ MODELID=$SLURM_JOB_NAME
 # - config/model/qwen_2.5_vl_7b.json
 # - config/data/nolima.json
 # - config/render/default.yml
-source .venv/bin/activate
-python examples/run.py \
+uv run examples/run.py \
     --model config/model/qwen_2.5_vl_72b.json \
     --data config/data/ruler.json \
     --render ${RENDER} \
     --data.context_length ${LEN} \
-    --run.num_tasks 10
+    --run.num_tasks 10 \
+    $@
+
+# you can specify needle set from cmdline, e.g.
+# sbatch xxx.sbatch --data.needle_set_path data/RULER/needlesets/mv_niah.json \

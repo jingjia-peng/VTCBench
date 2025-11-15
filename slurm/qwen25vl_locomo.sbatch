@@ -42,3 +42,7 @@ uv run examples/run.py \
     --data config/data/locomo.json \
     --data.needle_set_path ${DATASETS[$SLURM_ARRAY_TASK_ID]} \
     --render config/render/locomo.yml \
+    --run.num_tasks 0 \
+    $@
+
+# --run.parent_results_dir evaluation_results/compr2/ \
