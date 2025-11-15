@@ -177,11 +177,15 @@ class RunArgs:
         default=1,
         metadata={"help": "Number of parallel workers for evaluation"},
     )
-    enable_api_cache: bool = field(
-        default=True,
+    parent_api_cache_dir: str | None = field(
+        default=".cache/api_calls",
         metadata={"help": "Enable caching of API responses to avoid redundant calls"},
     )
     num_tasks: Optional[int] = field(
         default=50,
         metadata={"help": "Number of tasks to sample for evaluation"},
+    )
+    verbose: bool = field(
+        default=True,
+        metadata={"help": "Show verbose output for the first sample only"},
     )

@@ -1,4 +1,5 @@
 #!/bin/python3
+import re
 import json
 import os.path as osp
 import sys
@@ -6,6 +7,19 @@ from glob import glob
 
 import pandas as pd
 from tqdm.contrib.concurrent import process_map
+from locoxim.metric import calc_metrics
+
+
+def remove_think_tags(text: str) -> str:
+    # Remove <think>...</think> tags and their content
+    return re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL)
+
+
+def recalc_metric(response: str, gold_answers: list) -> dict:
+    return calc_metrics(
+        response=remove_think_tags(response),
+        gold_answers=gold_answers,
+    )
 
 
 def wrap_as_dict(obj: dict | int, default_key: str = "EM") -> dict:
@@ -21,8 +35,9 @@ def read_worker(fp: str) -> dict:
         results: list[dict] = json_data["results"]
         data_args: dict = json_data["data_args"]
         model_id: str = json_data["model_args"]["model"]
+        # redo evaluation to ensure consistency
         return [
-            wrap_as_dict(result["metric"])
+            recalc_metric(result["response"], result["gold_answers"])
             | data_args
             | {
                 "collection_id": osp.dirname(fp),

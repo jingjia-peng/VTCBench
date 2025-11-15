@@ -34,6 +34,7 @@ from .dataio import (
     get_hash,
     has_placeholder,
 )
+from .metric import calc_metrics
 from .NoLiMa.book_haystack import BookHaystack
 
 
@@ -50,82 +51,6 @@ def scan_dir_for_hash(
             return scan_file
 
     return None
-
-
-def _evaluate_response(
-    response: str,
-    gold_answers: list[str],
-    metric: list[
-        Literal[
-            "EM",
-            "contains",
-            "contains_all",
-            "lastline_EM",
-            "lastline_contains",
-            "ROUGE-L",
-        ]
-    ] = None,
-) -> dict[str, float | int]:
-    assert gold_answers is not None and len(gold_answers) > 0, (
-        "gold_answers is None or empty"
-    )
-    # make sure gold answers are stripped strings, not int/float/etc.,
-    # otherwise the 'contains' metric may fail
-    gold_answers = [str(ans).strip() for ans in gold_answers]
-
-    if metric is None:
-        metric = [
-            "EM",
-            "contains",
-            "contains_all",
-            "lastline_EM",
-            "lastline_contains",
-            "ROUGE-L",
-        ]
-    elif isinstance(metric, str):
-        metric = [metric]
-
-    scores = {}
-    for each_metric in metric:
-        match each_metric:
-            case "EM":
-                scores[each_metric] = int(response.strip() in gold_answers)
-            case "contains":
-                scores[each_metric] = int(
-                    any([f"{gold_answer}" in response for gold_answer in gold_answers])
-                )
-            case "contains_all":
-                # all gold answers should be contained in the response
-                # if so metric==1, can be fractional
-                scores[each_metric] = float(
-                    sum([f"{gold_answer}" in response for gold_answer in gold_answers])
-                    / len(gold_answers)
-                )
-            case "lastline_EM":
-                scores[each_metric] = int(
-                    response.strip().split("\n")[-1] in gold_answers
-                )
-            case "lastline_contains":
-                scores[each_metric] = int(
-                    any(
-                        [
-                            gold_answer in response.strip().split("\n")[-1]
-                            for gold_answer in gold_answers
-                        ]
-                    )
-                )
-            case "ROUGE-L":
-                scorer = rouge_scorer.RougeScorer(["rougeL"], use_stemmer=True)
-                if len(gold_answers) == 0:
-                    scores[each_metric] = 0.0
-                else:
-                    scores[each_metric] = max(
-                        s["rougeL"].fmeasure
-                        for s in [scorer.score(response, ref) for ref in gold_answers]
-                    )
-            case _:
-                raise ValueError(f"Invalid metric: {each_metric}")
-    return scores
 
 
 def evaluate(
@@ -254,7 +179,7 @@ def evaluate(
                     "top_p": model_args.top_p,
                 },
                 extra_kwargs=model_args.extra_kwargs,
-                use_cache=run_args.enable_api_cache,
+                parent_api_cache_dir=run_args.parent_api_cache_dir,
                 verbose=verbose and (_needle_depth_i == 0),
             )
         )
@@ -279,7 +204,7 @@ def evaluate(
     responses: list[dict] = loop.run_until_complete(asyncio.gather(*async_tasks))
 
     for _res_i, _res in enumerate(responses):
-        results_for_all_depths[_res_i]["metric"] = _evaluate_response(
+        results_for_all_depths[_res_i]["metric"] = calc_metrics(
             _res["response"],
             gold_answers=results_for_all_depths[_res_i]["gold_answers"],
         )

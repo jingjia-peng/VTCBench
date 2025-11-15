@@ -20,7 +20,7 @@ from tenacity import (
 )
 
 from ..args import args_to_dict
-from ..dataio import api_cache_io, api_cache_path
+from ..dataio import api_cache_io, api_cache_path, remove_html_tags
 from ..token_counter import TokenCounter
 from .image_helper import ImageTextPayload
 
@@ -124,7 +124,7 @@ class APIConnector:
         generation_kwargs: Optional[dict] = None,
         extra_kwargs: Optional[dict] = None,
         render_args: Optional["RenderArgs"] = None,
-        use_cache: bool = True,
+        parent_api_cache_dir: Optional[str] = None,
         verbose: bool = False,
     ) -> dict:
         """
@@ -154,9 +154,13 @@ class APIConnector:
                 "render_args": args_to_dict(render_args),
                 "api_provider": self.api_provider,
                 "model": self.model,
-            }
+            },
+            parent=parent_api_cache_dir,
         )
-        if use_cache and (response := api_cache_io(cache_path)) is not None:
+        if (
+            parent_api_cache_dir is not None
+            and (response := api_cache_io(cache_path)) is not None
+        ):
             if verbose:
                 print("=== API Call Cached Response ===")
                 pprint(response)
@@ -183,7 +187,7 @@ class APIConnector:
         user_prompt_content = None
         if isinstance(user_prompt, str) and (pure_text or render_args is None):
             # plain text input
-            user_prompt_content = user_prompt.strip()
+            user_prompt_content = remove_html_tags(user_prompt.strip())
         elif isinstance(user_prompt, str):
             # multimodal input by guessing
             payload = ImageTextPayload()

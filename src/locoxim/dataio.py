@@ -1,3 +1,4 @@
+import re
 import json
 import os.path as osp
 import pickle as pkl
@@ -7,7 +8,6 @@ from hashlib import sha256
 from typing import Any, Generator, Optional
 
 HASH_CACHE_KEY = "hash_sha256"
-API_CACHE_DIR = ".cache/api_calls"
 
 
 def dataclass_to_dict(instance) -> dict:
@@ -29,6 +29,13 @@ def fill_placeholders(template: str, placeholder: str, value: str) -> str:
         return template.replace(placeholder, value)
     # otherwise return the original
     return template
+
+
+def remove_html_tags(text: str) -> str:
+    """Remove HTML tags from a string."""
+    clean = re.compile("<.*?>")
+    duplicated_spaces = re.compile(r"\s+")
+    return re.sub(duplicated_spaces, " ", re.sub(clean, " ", text))
 
 
 def get_hash(
@@ -66,16 +73,22 @@ def get_hash_str(input_str: str) -> str:
     return sha256(input_str.encode("utf-8")).hexdigest()
 
 
-def api_cache_path(messages: dict) -> str:
+def api_cache_path(messages: dict, parent: str | None) -> str | None:
+    if parent is None:
+        return None
+
     msg_str = json.dumps(messages, sort_keys=True)
     msg_hash = get_hash_str(msg_str)
-    return f"{API_CACHE_DIR}/{msg_hash}.pkl"
+    return f"{parent}/{msg_hash}.pkl"
 
 
 def api_cache_io(
-    cache_path: str,
+    cache_path: str | None,
     save_response: dict = None,
 ) -> dict | None:
+    if cache_path is None:
+        return None
+
     # need to work with async functions
     if osp.exists(cache_path):
         with open(cache_path, "rb") as file:

@@ -11,7 +11,7 @@ from tqdm.contrib.concurrent import process_map
 
 from locoxim.args import DataArgs, ModelArgs, RunArgs
 from locoxim.async_evaluate import evaluate
-from locoxim.dataio import API_CACHE_DIR, NeedleTestConfig, iter_question_items
+from locoxim.dataio import NeedleTestConfig, iter_question_items
 
 
 def _worker(kwargs):
@@ -29,7 +29,7 @@ def run_test(
         experiment_config: list[NeedleTestConfig] = [
             NeedleTestConfig(**e) for e in _raw_dict
         ]
-    os.makedirs(API_CACHE_DIR, exist_ok=True)
+    os.makedirs(run_args.parent_api_cache_dir, exist_ok=True)
 
     # an experiment is a json, containing multiple tests, with a test_id and its args
     questions = [
@@ -63,7 +63,7 @@ def run_test(
     if run_args.num_workers <= 1:
         with tqdm(total=len(tasks)) as pbar:
             for task in tasks:
-                result = evaluate(**task, verbose=(pbar.n == 0))
+                result = evaluate(**task, verbose=(pbar.n == 0) and run_args.verbose)
                 pbar.set_postfix(result=result)
                 pbar.update()
     else:
