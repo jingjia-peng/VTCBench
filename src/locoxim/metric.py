@@ -15,7 +15,8 @@ def calc_metrics(
             "lastline_contains",
             "ROUGE-L",
         ]
-    ] = None,
+    ]
+    | None = None,
 ) -> dict[str, float | int]:
     assert gold_answers is not None and len(gold_answers) > 0, (
         "gold_answers is None or empty"
@@ -33,8 +34,6 @@ def calc_metrics(
             "lastline_contains",
             "ROUGE-L",
         ]
-    elif isinstance(metric, str):
-        metric = [metric]
 
     scores = {}
     for each_metric in metric:

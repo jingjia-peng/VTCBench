@@ -42,18 +42,16 @@ class BookHaystack:
         context_length: int,
         shift: int = 0,
         depth: float = 0.5,
-        static_depth: float = None,
+        static_depth: float | None = None,
     ) -> dict:
         if self.text_encoded is None:
             self.text_encoded = token_counter.encode(self.text)
             self.text_tokens = [token_counter.decode([i]) for i in self.text_encoded]
-            self.valid_positions_token_counts = [0]
+            valid_positions_token_counts = [0]
             for i in range(len(self.text_tokens)):
                 if "\n" in self.text_tokens[i]:
-                    self.valid_positions_token_counts.append(i)
-            self.valid_positions_token_counts = np.array(
-                self.valid_positions_token_counts
-            )
+                    valid_positions_token_counts.append(i)
+            self.valid_positions_token_counts = np.array(valid_positions_token_counts)
         if static_depth is None:
             delta = (self.valid_positions_token_counts - shift) / (
                 context_length + 1
@@ -127,10 +125,10 @@ class BookHaystack:
         self,
         needle: str | None,
         token_counter: TokenCounter,
-        context_length: int,
+        context_length: int | None,
         shift: int = 0,
         depth: float = 0.5,
-        static_depth: float = None,
+        static_depth: float | None = None,
         distractor: Union[str, None] = None,
         distractor_free_zone: float = 0.2,
         context: str | None = None,
@@ -146,6 +144,7 @@ class BookHaystack:
                 "depth": None,
                 "context_length_wo_needle": None,
             }
+        assert context_length is not None
 
         # no distractor, use needle
         if distractor is None:

@@ -108,7 +108,7 @@ class DataArgs:
         default=True,
         metadata={"help": "Use default system prompt"},
     )
-    context_length: int = field(
+    context_length: int | None = field(
         default=None,
         metadata={"help": "Context length for the needle placement"},
     )
@@ -124,13 +124,13 @@ class DataArgs:
         default=35,
         metadata={"help": "Number of points between min and max depth"},
     )
-    shift: float = field(
+    shift: int = field(
         default=0,
         metadata={
             "help": "Shift for needle placement, applied to the beginning of the haystack"
         },
     )
-    static_depth: float = field(
+    static_depth: float | None = field(
         default=None,
         metadata={"help": "Static depth for needle placement"},
     )

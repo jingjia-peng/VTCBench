@@ -17,8 +17,8 @@ class ImageTextPayload:
     def add_image_adaptive(
         self,
         image: bytes | str | PILImage.Image,
-        save_format: str = None,
-        save_kwargs: dict = None,
+        save_format: str | None = None,
+        save_kwargs: dict | None = None,
     ):
         self.payloads.append(
             {
@@ -61,7 +61,9 @@ def image_path_to_data_url(image_path: str) -> str:
 
 
 def image_object_to_data_url(
-    image_object: PILImage.Image, save_format: str | None, save_kwargs: dict = None
+    image_object: PILImage.Image,
+    save_format: str | None,
+    save_kwargs: dict | None = None,
 ) -> str:
     """Convert an image object to a data URL.
 
@@ -99,8 +101,8 @@ def image_bytes_to_data_url(image_bytes: bytes, ext: str) -> str:
 
 def adaptive_image_to_data_url(
     image: bytes | str | PILImage.Image,
-    save_format: str = None,
-    save_kwargs: dict = None,
+    save_format: str | None = None,
+    save_kwargs: dict | None = None,
 ) -> str:
     r"""Resize the image if larger than max_size and convert to data URL.
 

@@ -86,7 +86,7 @@ def api_cache_path(messages: dict, parent: str | None) -> str | None:
 
 def api_cache_io(
     cache_path: str | None,
-    save_response: dict = None,
+    save_response: dict | None = None,
 ) -> dict | None:
     if cache_path is None:
         return None
