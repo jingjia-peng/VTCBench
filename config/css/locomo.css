@@ -1,5 +1,6 @@
 span {
   font-size: 12px;
+  font-family: Helvetica;
 }
 span.dialogue:nth-child(even) {
   background-color: lightgreen;
