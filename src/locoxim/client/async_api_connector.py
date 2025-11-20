@@ -11,7 +11,6 @@ from pprint import pprint
 from typing import TYPE_CHECKING, Literal, Optional, Union
 
 from deocr.engine.playwright.async_api import transform
-from langchain_aws import ChatBedrockConverse
 from openai import AsyncAzureOpenAI, AsyncOpenAI
 from tenacity import (
     retry,
@@ -73,7 +72,7 @@ class APIConnector:
         self.api_provider = api_provider
 
         self.token_counter = TokenCounter(
-            tokenizer_type=tokenizer_type or DEFAULT_TOKENIZER_MAPPING[api_provider],
+            tokenizer_type=tokenizer_type or DEFAULT_TOKENIZER_MAPPING[api_provider],  # type: ignore
             tokenizer_model=tokenizer_model or model,
         )
 
@@ -99,17 +98,57 @@ class APIConnector:
                 max_retries=kwargs["max_retries"],
                 timeout=kwargs["timeout"],
             )
-        elif api_provider == "aws":
-            self.api = ChatBedrockConverse(
-                model=model,
-                temperature=kwargs["temperature"],
-                max_tokens=kwargs["max_tokens"],
-                region_name=kwargs["region"],
-                top_p=kwargs["top_p"],
-            )
+        else:
+            raise NotImplementedError(f"Unsupported API provider: {api_provider}")
 
         self.model = model
         self.model_config = kwargs
+
+    @retry(
+        reraise=True,
+        wait=wait_random(1, 20),
+        stop=stop_after_delay(300),
+    )
+    async def call_openai_api(
+        self,
+        messages: list[dict],
+        max_tokens: int,
+        generation_kwargs: dict | None = None,
+        extra_kwargs: dict | None = None,
+    ) -> "ChatCompletion":
+        params = {"model": self.model, "messages": messages, "seed": 43}
+        if self.model_config.get("openai_thinking_model", False):
+            # thinking models, e.g. GPT-5 use another set of params
+            params["max_completion_tokens"] = max_tokens
+            params["reasoning_effort"] = "minimal"
+            params["verbosity"] = "low"
+        elif self.model.startswith("gemini"):
+            params["max_tokens"] = max_tokens
+            params["extra_body"] = {
+                "extra_body": {
+                    "google": {
+                        "thinking_config": {
+                            "thinking_budget": self.model_config.get(
+                                "thinking_budget", 0
+                            ),
+                        }
+                    }
+                }
+            }
+        else:
+            params["max_tokens"] = max_tokens
+            params = params | (generation_kwargs or {})
+            params["extra_body"] = extra_kwargs
+
+        try:
+            completion = await self.api.chat.completions.create(**params)
+            return completion
+        except Exception as e:
+            print("=== API Call Exception ===")
+            pprint(params)
+            pprint(messages)
+            print("--------------------------")
+            raise e
 
     async def generate_response(
         self,
@@ -232,48 +271,12 @@ class APIConnector:
             or self.api_provider == "vllm"
             or self.api_provider == "azure-openai"
         ):
-
-            @retry(
-                reraise=True,
-                wait=wait_random(1, 20),
-                stop=stop_after_delay(300),
+            completion = await self.call_openai_api(
+                messages=messages,
+                max_tokens=max_tokens,
+                generation_kwargs=generation_kwargs,
+                extra_kwargs=extra_kwargs,
             )
-            async def generate_content() -> "ChatCompletion":
-                params = {"model": self.model, "messages": messages, "seed": 43}
-                if self.model_config.get("openai_thinking_model", False):
-                    # thinking models, e.g. GPT-5 use another set of params
-                    params["max_completion_tokens"] = max_tokens
-                    params["reasoning_effort"] = "minimal"
-                    params["verbosity"] = "low"
-                elif self.model.startswith("gemini"):
-                    params["max_tokens"] = max_tokens
-                    params["extra_body"] = {
-                        "extra_body": {
-                            "google": {
-                                "thinking_config": {
-                                    "thinking_budget": self.model_config.get(
-                                        "thinking_budget", 0
-                                    ),
-                                }
-                            }
-                        }
-                    }
-                else:
-                    params["max_tokens"] = max_tokens
-                    params = params | (generation_kwargs or {})
-                    params["extra_body"] = extra_kwargs
-
-                try:
-                    completion = await self.api.chat.completions.create(**params)
-                    return completion
-                except Exception as e:
-                    print("=== API Call Exception ===")
-                    pprint(params)
-                    pprint(messages)
-                    print("--------------------------")
-                    raise e
-
-            completion = await generate_content()
 
             output = {
                 "response": completion.choices[0].message.content,

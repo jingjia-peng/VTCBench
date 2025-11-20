@@ -1,4 +1,4 @@
-from functools import cache, partial
+from functools import partial
 from typing import Callable, Literal
 
 import tiktoken
@@ -29,7 +29,6 @@ class TokenCounter:
             case _:
                 raise ValueError(f"Unsupported tokenizer type: {tokenizer_type}")
 
-    @cache
     def token_count(self, text: str) -> int:
         tokens = self.encode(text)
         return len(tokens)

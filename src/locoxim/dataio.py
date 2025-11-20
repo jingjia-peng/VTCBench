@@ -3,7 +3,6 @@ import os.path as osp
 import pickle as pkl
 import re
 from dataclasses import dataclass, is_dataclass
-from functools import cache
 from hashlib import sha256
 from typing import Any, Generator
 
@@ -70,7 +69,6 @@ def get_hash(
     return hash_str
 
 
-@cache
 def get_hash_str(input_str: str) -> str:
     return sha256(input_str.encode("utf-8")).hexdigest()
 
