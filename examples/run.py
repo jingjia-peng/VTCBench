@@ -29,7 +29,8 @@ def run_test(
         experiment_config: list[NeedleTestConfig] = [
             NeedleTestConfig(**e) for e in _raw_dict
         ]
-    os.makedirs(run_args.parent_api_cache_dir, exist_ok=True)
+    if run_args.parent_api_cache_dir is not None:
+        os.makedirs(run_args.parent_api_cache_dir, exist_ok=True)
 
     # an experiment is a json, containing multiple tests, with a test_id and its args
     questions = [
