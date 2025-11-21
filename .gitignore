@@ -1,4 +1,5 @@
-evaluation_results/
+results*/
+*.pdf
 logs/
 
 # Byte-compiled / optimized / DLL files

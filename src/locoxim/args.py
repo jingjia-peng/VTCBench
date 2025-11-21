@@ -159,7 +159,7 @@ class RunArgs:
         },
     )
     parent_results_dir: str = field(
-        default="evaluation_results",
+        default="results",
         metadata={"help": "Parent directory to save results"},
     )
     base_seed: int = field(
