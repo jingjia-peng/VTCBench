@@ -14,6 +14,66 @@ from locoxim.async_evaluate import evaluate
 from locoxim.dataio import NeedleTestConfig, iter_question_items
 
 
+__doc__ = """
+A script to run VTCBench-M experiments, results are saved to disk following RunArgs settings.
+A sample structure look like:
+
+```
+.
+├── results/
+│   ├── gpt-5/
+│   │   ├── <longlong_hash>/
+│   │   │   ├── gpt-5_book_<haystack>_<test_id>_<question_id>_<questiontype>_<timestamp>.json
+│   │   │   ├── gpt-5_<haystack>_<test_id>_<question_id>_<questiontype>_<timestamp>.json
+```
+
+each json file contains:
+{
+    "model_args": {...},
+    "data_args": {...},
+    "run_args": {...},
+    "render_args": {...},
+    "question_item": {...},
+    "haystack_path": "...",
+    "response": "...",
+    "system_prompt": "You are a helpful assistant.",
+	"haystack_hash": "1f7bdc697141b888565c851e6c34dbd649aaf580280eae92199561c4f0e93dab",
+	"hash_sha256": "e020d51012134539143004e6d8b99ca2ca3a6c4af948b1d49596dd983b66b6c0",
+	"eval_name": "Qwen2.5-VL-7B-Instruct_book_0401_T15_C02_onehop_1763530329",
+	"results": [
+		{
+			"placement_metadata": {
+				"static_depth": null,
+				"token_depth": 0,
+				"depth": 0.0,
+				"context_length_wo_needle": 1000
+			},
+			"gold_answers": [
+				"Gary"
+			],
+			"metric": {
+				"EM": 1,
+				"contains": 1,
+				"contains_all": 1.0,
+				"lastline_EM": 1,
+				"lastline_contains": 1,
+				"ROUGE-L": 1.0
+			},
+			"response": "Gary",
+			"prompt_tokens": 2119,
+			"completion_tokens": 2,
+			"total_tokens": 2121,
+			"finish_reason": "stop",
+			"cached_tokens": null,
+			"api_cache_path": null
+		},
+		...
+	],
+    "result_path": "..."
+}
+"""
+
+
 def _worker(kwargs):
     evaluate(**kwargs)
 
@@ -32,7 +92,14 @@ def run_test(
     if run_args.parent_api_cache_dir is not None:
         os.makedirs(run_args.parent_api_cache_dir, exist_ok=True)
 
-    # an experiment is a json, containing multiple tests, with a test_id and its args
+    # an experiment is a json in NoLiMA, it contains multiple tests,
+    #   where a test has a test_id, test templates and several question items,
+    #       where a question item comes with a preset dict[str, list] inputs and gts,
+    #       filling placeholders in the test templates.
+    #   note: a test may have multiple test templates (difficulty), e.g. onehop, twohop
+    #   final_prompt=template.format(**inputs), permuted to get MxN combinations
+    #   template->question_type; inputs->NeedleTestConfig.tests
+    #   so a question_id is haystack + test_id + question_type + index_for_inputs
     questions = [
         question
         for test_config in experiment_config

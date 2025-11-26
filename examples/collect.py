@@ -11,6 +11,11 @@ from tqdm.contrib.concurrent import process_map
 from locoxim.metric import calc_metrics
 
 
+__doc__ = """
+Collect results from multiple json files and summarize the results by metadata,
+such as VLM model name, data info, render args, shown as a table.
+"""
+
 def remove_think_tags(text: str) -> str:
     # Remove <think>...</think> tags and their content
     return re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL)
@@ -21,13 +26,6 @@ def recalc_metric(response: str, gold_answers: list) -> dict:
         response=remove_think_tags(response),
         gold_answers=gold_answers,
     )
-
-
-def wrap_as_dict(obj: dict | int, default_key: str = "EM") -> dict:
-    if isinstance(obj, dict):
-        return obj
-    else:
-        return {default_key: obj}
 
 
 def read_worker(fp: str) -> list[dict]:
