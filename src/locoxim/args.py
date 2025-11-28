@@ -1,4 +1,4 @@
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field, is_dataclass
 
 
 def args_to_dict(args) -> dict:
@@ -7,6 +7,9 @@ def args_to_dict(args) -> dict:
     """
     if args is None:
         return {}
+    if is_dataclass(args):
+        return {k: v for k, v in asdict(args).items() if not k.startswith("_")}
+
     return {k: v for k, v in dict(args).items() if not k.startswith("_")}
 
 
