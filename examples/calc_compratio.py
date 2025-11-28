@@ -12,7 +12,6 @@ from locoxim.args import DataArgs, ModelArgs, RunArgs
 from locoxim.dataio import NeedleTestConfig, iter_question_items
 from locoxim.img_counter import iter_context_and_images
 
-
 __doc__ = """
 This script is the dry-run version of run.py, here we are interested in the data.
 It renders the images and output them as PILImage objects, counts them and computes

@@ -13,7 +13,6 @@ from locoxim.args import DataArgs, ModelArgs, RunArgs
 from locoxim.async_evaluate import evaluate
 from locoxim.dataio import NeedleTestConfig, iter_question_items
 
-
 __doc__ = """
 A script to run VTCBench-M experiments, results are saved to disk following RunArgs settings.
 A sample structure look like:
