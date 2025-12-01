@@ -65,7 +65,7 @@ def evaluate(
     path_friendly_model_name = model_args.model.replace("/", "_")
     eval_name = f"{path_friendly_model_name}_{haystack.get_hash()[:8]}_{question_item.question_id}_{int(time.time())}"
 
-    results_dir = f"{run_args.parent_results_dir}/{path_friendly_model_name}/{get_hash(args_to_dict(data_args) | args_to_dict(model_args) | args_to_dict(render_args))}"
+    results_dir = f"{run_args.result_dir}/{path_friendly_model_name}/{get_hash(args_to_dict(data_args) | args_to_dict(model_args) | args_to_dict(render_args))}"
     os.makedirs(results_dir, exist_ok=True)
 
     outputs = {

@@ -57,17 +57,17 @@ class ModelArgs:
     # networking stuff
     timeout: int = field(
         default=200,
-        metadata={"help": "Timeout for API requests in seconds"},
+        metadata={"help": "Timeout for API requests in seconds."},
     )
     max_retries: int = field(
         default=3,
-        metadata={"help": "Maximum number of retries for API requests"},
+        metadata={"help": "Maximum number of retries for API requests."},
     )
 
     # computing tokens to figure out compression ratio
     tokenizer_type: str | None = field(
         default="huggingface",
-        metadata={"help": "Type of tokenizer to use"},
+        metadata={"help": "Type of tokenizer to use."},
     )
     tokenizer_model: str | None = field(
         default=None,
@@ -85,45 +85,45 @@ class DataArgs:
 
     needle_set_path: list[str] = field(
         default_factory=list,
-        metadata={"help": "Path to a file containing the needle tests configuration"},
+        metadata={"help": "Path to a file containing the needle tests configuration."},
     )
     haystack_dir: str = field(
         default="data/NoLiMa/haystack/rand_shuffle",
-        metadata={"help": "Directory containing the haystack files"},
+        metadata={"help": "Directory containing the haystack files."},
     )
     task_template: str | None = field(
         default=None,
-        metadata={"help": "Task template name overriding ones specified in needle set"},
+        metadata={"help": "Task template, overriding ones specified in needle set."},
     )
     use_default_system_prompt: bool = field(
         default=True,
-        metadata={"help": "Use default system prompt"},
+        metadata={"help": "If use default system prompt, i.e. `ModelArgs.system_prompt`."},
     )
     context_length: int | None = field(
         default=None,
-        metadata={"help": "Context length for the needle placement"},
+        metadata={"help": "Context length for the needle placement."},
     )
     document_depth_percent_min: float = field(
         default=0,
-        metadata={"help": "Minimum document depth percentage"},
+        metadata={"help": "Minimum document depth percentage."},
     )
     document_depth_percent_max: float = field(
         default=100,
-        metadata={"help": "Maximum document depth percentage"},
+        metadata={"help": "Maximum document depth percentage."},
     )
     document_depth_num_tests: int = field(
         default=35,
-        metadata={"help": "Number of points between min and max depth"},
+        metadata={"help": "Number of points between min and max depth."},
     )
     shift: int = field(
         default=0,
         metadata={
-            "help": "Shift for needle placement, applied to the beginning of the haystack"
+            "help": "Shift for needle placement, applied to the beginning of the haystack."
         },
     )
     static_depth: float | None = field(
         default=None,
-        metadata={"help": "Static depth for needle placement"},
+        metadata={"help": "Static depth for needle placement."},
     )
     pure_text: bool = field(
         default=True,
@@ -139,47 +139,64 @@ class RunArgs:
     Arguments for identifying, collecting, and reporting runs.
     """
 
-    log_dir: str | None = field(
-        default=None,
-        metadata={
-            "help": "Log directory to save intermediate output. If None, no logs are saved."
-        },
-    )
+    # evaluation stuff, randomness, parallelism, etc.
     base_seed: int = field(
         default=42,
-        metadata={"help": "Base seed for random operations"},
+        metadata={"help": "Base seed for random operations."},
     )
     prevent_duplicate_tests: bool = field(
         default=False,
         metadata={
-            "help": "Prevent duplicate tests in the evaluation by scanning other results. Warning: this slows down evaluation significantly."
-        },
-    )
-    num_workers: int = field(
-        default=1,
-        metadata={"help": "Number of parallel workers for evaluation"},
-    )
-    parent_results_dir: str = field(
-        default="results",
-        metadata={"help": "Parent directory to save results"},
-    )
-    api_cache_dir: str | None = field(
-        default=".cache/api_calls",
-        metadata={
-            "help": "Parent dir to store api call-response cache to avoid redundant calls. If None, disable caching."
-        },
-    )
-    image_dir: str | None = field(
-        default=".cache/images",
-        metadata={
-            "help": "Parent dir to store intermediate images generated during evaluation."
+            "help": """
+            If true, prevent duplicate tests during evaluation.
+            Warning: scanning results causes IO overhead and slows down evaluation.
+            """
         },
     )
     num_tasks: int | None = field(
         default=50,
         metadata={"help": "Number of tasks to sample for evaluation"},
     )
+    num_workers: int = field(
+        default=1,
+        metadata={"help": "Number of parallel workers for evaluation"},
+    )
+
+    # dirs for logging/caching/outputs
+    api_cache_dir: str | None = field(
+        default=".cache/api_calls",
+        metadata={
+            "help": """
+            Parent dir to cache api response to avoid redundant calls.
+            If None, disable caching.
+            """
+        },
+    )
+    image_dir: str | None = field(
+        default=".cache/images",
+        metadata={
+            "help": """
+            Parent dir to save intermediate images generated during evaluation.
+            If None and image saving enabled, raise assertion error.
+            """
+        },
+    )
+    log_dir: str | None = field(
+        default=None,
+        metadata={
+            "help": """
+            Parent dir to log intermediate output.
+            If None, disable logging.
+            """
+        },
+    )
+    result_dir: str = field(
+        default="results",
+        metadata={"help": "Parent dir to save results."},
+    )
+
+    # for debugging
     verbose: bool = field(
         default=True,
-        metadata={"help": "Show verbose output for the first sample only"},
+        metadata={"help": "Enable verbose logging to stdout for first api call/response/cached response."},
     )
