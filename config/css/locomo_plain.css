@@ -1,0 +1,17 @@
+span {
+  font-size: 12px;
+  font-family: Helvetica;
+}
+.timestamp {
+  color: gray;
+}
+span + span {
+  margin-left: 4px;
+}
+div + div {
+  margin-top: 6px;
+}
+span.dialogue[data-speaker]:before {
+  content: attr(data-speaker) ": ";
+  font-weight: bold;
+}
