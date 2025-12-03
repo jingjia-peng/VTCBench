@@ -7,12 +7,14 @@
 
 import hashlib
 import os
-from typing import Union
+from typing import TYPE_CHECKING, Union
 
 import numpy as np
 
-from ..token_counter import TokenCounter
 from .str_transform import remove_html_tags
+
+if TYPE_CHECKING:
+    from .token_counter import TokenCounter
 
 
 class BookHaystack:
@@ -39,7 +41,7 @@ class BookHaystack:
     def _generate_w_needle_placement(
         self,
         needle: str,
-        token_counter: TokenCounter,
+        token_counter: "TokenCounter",
         context_length: int,
         shift: int = 0,
         depth: float = 0.5,
@@ -125,7 +127,7 @@ class BookHaystack:
     def generate_w_needle_placement(
         self,
         needle: str | None,
-        token_counter: TokenCounter,
+        token_counter: "TokenCounter",
         context_length: int | None,
         shift: int = 0,
         depth: float = 0.5,

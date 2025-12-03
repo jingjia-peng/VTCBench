@@ -19,7 +19,7 @@ from tenacity import (
 )
 
 from ..dataio import api_cache_io, api_cache_path, args_to_dict, remove_html_tags, strip
-from ..token_counter import TokenCounter
+from ..dataio.token_counter import TokenCounter
 from .image_helper import ImageTextPayload
 
 if TYPE_CHECKING:
