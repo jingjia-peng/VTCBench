@@ -97,7 +97,9 @@ class DataArgs:
     )
     use_default_system_prompt: bool = field(
         default=True,
-        metadata={"help": "If use default system prompt, i.e. `ModelArgs.system_prompt`."},
+        metadata={
+            "help": "If use default system prompt, i.e. `ModelArgs.system_prompt`."
+        },
     )
     context_length: int | None = field(
         default=None,
@@ -198,5 +200,7 @@ class RunArgs:
     # for debugging
     verbose: bool = field(
         default=True,
-        metadata={"help": "Enable verbose logging to stdout for first api call/response/cached response."},
+        metadata={
+            "help": "Enable verbose logging to stdout for first api call/response/cached response."
+        },
     )

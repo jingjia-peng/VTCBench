@@ -5,8 +5,7 @@ import numpy as np
 from deocr.engine.playwright.async_api import transform as async_transform
 
 from .client.async_api_connector import APIConnector
-from .dataio import args_to_dict, fill_placeholders, has_placeholder
-from .NoLiMa.book_haystack import BookHaystack
+from .dataio import BookHaystack, args_to_dict, fill_placeholders, has_placeholder
 
 if TYPE_CHECKING:
     from deocr.engine.args import RenderArgs

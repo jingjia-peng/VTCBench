@@ -19,6 +19,7 @@ import numpy as np
 from .client.async_api_connector import APIConnector
 from .dataio import (
     HASH_CACHE_KEY,
+    BookHaystack,
     api_cache_io,
     args_to_dict,
     fill_placeholders,
@@ -26,7 +27,6 @@ from .dataio import (
     has_placeholder,
 )
 from .metric import calc_metrics
-from .NoLiMa.book_haystack import BookHaystack
 
 if TYPE_CHECKING:
     from deocr.engine.args import RenderArgs

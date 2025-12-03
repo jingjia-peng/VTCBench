@@ -11,7 +11,7 @@ from tqdm.contrib.concurrent import process_map
 from locoxim.args import DataArgs, ModelArgs, RunArgs
 from locoxim.async_evaluate import evaluate
 from locoxim.dataio import NeedleTestConfig, iter_question_items
-from locoxim.img_counter import iter_context_and_images
+from locoxim.dry_evaluate import iter_context_and_images
 
 __doc__ = """
 This script is the dry-run version of run.py, here we are interested in the data.

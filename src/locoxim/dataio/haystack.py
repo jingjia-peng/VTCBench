@@ -11,8 +11,8 @@ from typing import Union
 
 import numpy as np
 
-from ..dataio import remove_html_tags
 from ..token_counter import TokenCounter
+from .str_transform import remove_html_tags
 
 
 class BookHaystack:
