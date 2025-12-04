@@ -182,7 +182,9 @@ class APIConnector:
         cache_path = api_cache_path(
             {
                 "system_prompt": system_prompt,
-                "user_prompt": user_prompt,
+                "user_prompt": user_prompt.to_message_content()
+                if isinstance(user_prompt, ImageTextPayload)
+                else user_prompt,
                 "max_tokens": max_tokens,
                 "use_default_system_prompt": use_default_system_prompt,
                 "pure_text": pure_text,

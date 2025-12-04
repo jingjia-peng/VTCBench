@@ -12,11 +12,12 @@ import json
 import os
 import os.path as osp
 import time
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Optional, TypedDict
 
 import numpy as np
 
 from .client.async_api_connector import APIConnector
+from .client.image_helper import ImageTextPayload
 from .dataio import (
     HASH_CACHE_KEY,
     BookHaystack,
@@ -24,6 +25,7 @@ from .dataio import (
     args_to_dict,
     fill_placeholders,
     get_hash,
+    get_hash_str,
     has_placeholder,
 )
 from .metric import calc_metrics
@@ -65,7 +67,10 @@ def evaluate(
     path_friendly_model_name = model_args.model.replace("/", "_")
     eval_name = f"{path_friendly_model_name}_{haystack.get_hash()[:8]}_{question_item.question_id}_{int(time.time())}"
 
-    results_dir = f"{run_args.result_dir}/{path_friendly_model_name}/{get_hash(args_to_dict(data_args) | args_to_dict(model_args) | args_to_dict(render_args))}"
+    results_dir = (
+        f"{run_args.result_dir}/{path_friendly_model_name}"
+        f"/{get_hash(args_to_dict(data_args) | args_to_dict(model_args) | args_to_dict(render_args))}"
+    )
     os.makedirs(results_dir, exist_ok=True)
 
     outputs = {
@@ -205,6 +210,120 @@ def evaluate(
         api_cache_io(_res["api_cache_path"], save_response=_res)
 
     outputs["results"] = results_for_all_depths
+    outputs["result_path"] = results_path
+
+    with open(results_path, "w") as file:
+        json.dump(outputs, file, indent="\t")
+
+    return results_path
+
+
+class PregeneratedVQATriplet(TypedDict):
+    problem: str
+    # [{'bytes': b'...'}, ...]
+    images: list[dict[str, bytes]]
+    answers: list[str]
+    instruction: str | None
+
+
+def evaluate_static(
+    model_args: "ModelArgs",
+    run_args: "RunArgs",
+    # skips data_args, render_args, question_item, haystack_path
+    # because data is static i.e. pregenerated
+    example: PregeneratedVQATriplet,
+    use_default_system_prompt: bool = True,
+    verbose: bool = False,
+) -> str:
+    # example follows the same schema as our huggingface dataset
+    # https://huggingface.co/datasets/MLLM-CL/VTCBench
+    api_connector = APIConnector(**args_to_dict(model_args))
+
+    path_friendly_model_name = model_args.model.replace("/", "_")
+
+    # expects all the fields to be json-serializable
+    example_meta = {
+        "problem": example["problem"],
+        "answers": example["answers"],
+        "images_sha256": [
+            get_hash_str(json.dumps(img["bytes"].decode("iso-8859-1")))
+            for img in example["images"]
+        ],
+    }
+    eval_name = f"{path_friendly_model_name}_static_{get_hash(example_meta)[:8]}_{int(time.time())}"
+
+    # group by model config only (no data/render args for static)
+    results_dir = (
+        f"{run_args.result_dir}"
+        f"/{path_friendly_model_name}"
+        f"/{get_hash(args_to_dict(model_args) | example_meta)}"
+    )
+    os.makedirs(results_dir, exist_ok=True)
+
+    outputs = {
+        "model_args": args_to_dict(model_args),
+        "run_args": args_to_dict(run_args),
+        "example_meta": example_meta,
+        "system_prompt": api_connector.default_system_prompt
+        if use_default_system_prompt
+        else None,
+    }
+    output_hash = get_hash(outputs)
+    outputs[HASH_CACHE_KEY] = output_hash
+    outputs["eval_name"] = eval_name
+
+    results_path = f"{results_dir}/{eval_name}.json"
+    if osp.exists(results_path):
+        print(f"{results_path} exists, skipped.")
+        return results_path
+
+    if run_args.prevent_duplicate_tests:
+        scan_dir = osp.dirname(results_path)
+        if (
+            match := scan_dir_for_hash(scan_dir=scan_dir, target_hash=output_hash)
+        ) is not None:
+            print(f"Duplicate: {match}, {output_hash}, skipped.")
+            return match
+
+    # format user_prompt as ImageTextPayload
+    payload: ImageTextPayload = ImageTextPayload()
+    for each_image in example["images"]:
+        payload.add_image_adaptive(each_image["bytes"], save_format="jpeg")
+    if example["instruction"] is not None:
+        payload.add_text(example["instruction"] + example["problem"])
+    else:
+        payload.add_text(example["problem"])
+    async_task = api_connector.generate_response(
+        # no system prompt in static data, use the default(model-specific) one
+        system_prompt=None,
+        user_prompt=payload,
+        max_tokens=model_args.max_tokens,
+        use_default_system_prompt=use_default_system_prompt,
+        pure_text=False,
+        render_args=None,
+        generation_kwargs={
+            "temperature": model_args.temperature,
+            "top_p": model_args.top_p,
+        },
+        extra_kwargs=model_args.extra_kwargs,
+        api_cache_dir=run_args.api_cache_dir,
+        verbose=verbose,
+    )
+
+    loop = asyncio.get_event_loop()
+    response: dict = loop.run_until_complete(asyncio.gather(async_task))[0]
+
+    result_entry: dict = {
+        "gold_answers": example["answers"],
+    }
+    result_entry["metric"] = calc_metrics(
+        response["response"],
+        gold_answers=result_entry["gold_answers"],
+    )
+    result_entry |= response
+    api_cache_io(response["api_cache_path"], save_response=response)
+
+    outputs["results"] = [result_entry]
     outputs["result_path"] = results_path
 
     with open(results_path, "w") as file:
