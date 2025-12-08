@@ -29,8 +29,8 @@ def calc_metrics(
     )
     # make sure gold answers are stripped strings, not int/float/etc.,
     # otherwise the 'contains' metric may fail
-    gold_answers = [str(ans).strip() for ans in gold_answers]
-    response = remove_think_tags(response).strip()
+    gold_answers = [str(ans).strip().lower() for ans in gold_answers]
+    response = remove_think_tags(response).strip().lower()
     if metric is None:
         metric = [
             "EM",

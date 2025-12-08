@@ -73,10 +73,10 @@ def evaluate(
     )
     os.makedirs(results_dir, exist_ok=True)
 
+    # fields that affects id
     outputs = {
         "model_args": args_to_dict(model_args),
         "data_args": args_to_dict(data_args),
-        "run_args": args_to_dict(run_args),
         "render_args": args_to_dict(render_args),
         "question_item": args_to_dict(question_item),
         "system_prompt": api_connector.default_system_prompt
@@ -88,6 +88,8 @@ def evaluate(
     output_hash = get_hash(outputs)
     outputs[HASH_CACHE_KEY] = output_hash
 
+    # lazy add fields for runtime, this may change but does not affect id/result
+    outputs["run_args"] = args_to_dict(run_args)
     outputs["eval_name"] = eval_name
     results_for_all_depths: list[dict] = []
 
