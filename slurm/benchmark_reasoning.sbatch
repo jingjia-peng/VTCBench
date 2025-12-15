@@ -1,18 +1,18 @@
 #!/bin/bash
 #SBATCH -o logs/%x/%A_%a.out
 #SBATCH -e logs/%x/%A_%a.err
-#SBATCH -p a30
+#SBATCH -p a100
 #SBATCH --nodes=1
 #SBATCH --mem=64G
 #SBATCH -c 16
 #SBATCH -t 30-00:00:00
-#SBATCH -J Qwen2.5-VL-7B-Instruct
+#SBATCH -J NoLiMa
 #SBATCH --ntasks=1
 #SBATCH --array=0-5%1
 
-# get id from slurm, 1-4
+# get id from slurm, 0-5
 # if you are not from slurm, write a script that export it, like
-# for i in $(seq 1 4); do
+# for i in $(seq 0 5); do
 #     export SLURM_ARRAY_TASK_ID=${i}
 #     export SLURM_JOB_NAME="Qwen2.5-VL-7B-Instruct"
 #     # run in background, and dump stdout/err to files for logging
@@ -63,9 +63,6 @@ export PYTHON_UNBUFFERED=1
 export LIBRARY_PATH=$HOME/.local/lib:$LIBRARY_PATH
 export LD_LIBRARY_PATH=$HOME/.local/lib:$LD_LIBRARY_PATH
 
-# we specified `#SBATCH -J Qwen2.5-VL-72B-Instruct` at line9
-# so this is `MODELID=Qwen2.5-VL-72B-Instruct`
-MODELID=$SLURM_JOB_NAME
 
 # based on some common configs shared across a family of models
 # and modify for specific model
