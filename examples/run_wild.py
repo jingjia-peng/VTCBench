@@ -48,12 +48,13 @@ def run_wild(
     run_args: RunArgs,
     data_path: str,
     split: str,
+    pure_text: bool,
 ):
     if run_args.api_cache_dir is not None:
         os.makedirs(run_args.api_cache_dir, exist_ok=True)
 
     dataset = load_dataset(
-        data_path, split=split, columns=["problem", "answers", "images"]
+        data_path, split=split, columns=["problem", "answers", "images", "_context"]
     )
 
     tasks: list[dict] = []
@@ -65,6 +66,7 @@ def run_wild(
                 "run_args": run_args,
                 # below independent stuff
                 "example": example | {"instruction": _select_instruction_prompt(split)},
+                "pure_text": pure_text,
             }
         )
     # respect max number of tasks, if valid
@@ -107,6 +109,12 @@ if __name__ == "__main__":
         choices=["Retrieval", "Reasoning", "Memory"],
         help="Data split to use",
     )
+    parser.add_argument(
+        "--data.pure_text",
+        type=bool,
+        default=False,
+        help="Whether to use pure text data",
+    )
 
     args = parser.parse_args()
 
@@ -114,10 +122,12 @@ if __name__ == "__main__":
     run_args: RunArgs = args.run
     data_path: str = args.data.path
     split: str = args.data.split
+    pure_text: bool = args.data.pure_text
 
     run_wild(
         model_args=model_args,
         run_args=run_args,
         data_path=data_path,
         split=split,
+        pure_text=pure_text,
     )

@@ -27,6 +27,7 @@ from .dataio import (
     get_hash,
     get_hash_str,
     has_placeholder,
+    remove_html_tags,
 )
 from .metric import calc_metrics
 
@@ -226,6 +227,7 @@ class PregeneratedVQATriplet(TypedDict):
     images: list[dict[str, bytes]]
     answers: list[str]
     instruction: str | None
+    _context: str | None
 
 
 def evaluate_static(
@@ -234,6 +236,7 @@ def evaluate_static(
     # skips data_args, render_args, question_item, haystack_path
     # because data is static i.e. pregenerated
     example: PregeneratedVQATriplet,
+    pure_text: bool = True,
     use_default_system_prompt: bool = True,
     verbose: bool = False,
 ) -> str:
@@ -289,8 +292,11 @@ def evaluate_static(
 
     # format user_prompt as ImageTextPayload
     payload: ImageTextPayload = ImageTextPayload()
-    for each_image in example["images"]:
-        payload.add_image_adaptive(each_image["bytes"], save_format="jpeg")
+    if pure_text and example["_context"] is not None:
+        payload.add_text(remove_html_tags(example["_context"]))
+    else:
+        for each_image in example["images"]:
+            payload.add_image_adaptive(each_image["bytes"], save_format="jpeg")
     if example["instruction"] is not None:
         payload.add_text(example["instruction"] + example["problem"])
     else:
