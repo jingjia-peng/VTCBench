@@ -6,7 +6,7 @@
 #SBATCH --mem=64G
 #SBATCH -c 16
 #SBATCH -t 30-00:00:00
-#SBATCH -J NoLiMa
+#SBATCH -J VTC-Reasoning
 #SBATCH --ntasks=1
 #SBATCH --array=0-5%1
 
