@@ -45,12 +45,14 @@ def read_worker(fp: str) -> list[dict]:
 
         # optional args, may be missing for static dataset
         data_args: dict = json_data.get("data_args", {})
+        question_id: str = json_data.get("question_item", {}).get("question_id", "")
         render_css: str = json_data.get("render_args", {}).get("css", "")
         # redo evaluation to ensure consistency
         return [
             calc_metrics(result["response"], result["gold_answers"])
             | data_args
             | {
+                "question_id": question_id[:8],
                 "render_css": render_css,
                 "collection_id": osp.dirname(fp),
                 "json_id": osp.basename(fp),
@@ -88,6 +90,10 @@ if __name__ == "__main__":
     )
 
     df = pd.DataFrame([item for sublist in results for item in sublist])
+    # avoid hashing issue
+    df[_safe_columns(df, GROUP_BY_COLS)] = df[_safe_columns(df, GROUP_BY_COLS)].astype(
+        str
+    )
 
     # aggregate results
     df = (
