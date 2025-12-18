@@ -113,7 +113,7 @@ if __name__ == "__main__":
         "--data.pure_text",
         type=bool,
         default=False,
-        help="Whether to use pure text data",
+        help="For LLM baselines only. Whether to call API with pure text as input.",
     )
 
     args = parser.parse_args()

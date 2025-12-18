@@ -1,15 +1,11 @@
 # Usage
 
-## VTCBench
-
-## VTCBench-Wild
-
-## Evaluation Framework (This repo)
-
 This project adopts a server-client architecture. 
 We require a running OpenAI-compatible LLM/VLM server 
 (e.g., vLLM Serving[^1], OpenAI API[^2], etc.) 
 to provide LLM/VLM inference services.
+
+## Evaluation Framework (Client)
 
 This repo provides the evaluation framework, i.e. the client side of the project. 
 To set up the evaluation framework, you can use `uv` (recommended) or `pip`:
@@ -26,21 +22,7 @@ pip install -e .
 playwright install chromium
 ```
 
-To run evaluation, run python scripts under the [`examples/`](../examples/).
-
-```sh
-uv run examples/run.py \
-  --model config/model/qwen_2.5_vl_7b.json \
-  --data config/data/nolima.json \
-  --data.context_length 1000 \
-  --render config/render/default.yml \
-  --run.num_tasks 1
-```
-
-We also provide example shell/slurm scripts for parallel evaluation in 
-the [`slurm/`](../slurm) folder.
-
-<details><summary>More on playwright...</summary>
+<details><summary>More on playwright Installation...</summary>
 
 This project depends on [DeOCR](https://pypi.org/project/deocr/), which in turn
 depends on [Playwright](https://pypi.org/project/playwright/) to do text-to-image using a browser.
@@ -64,6 +46,41 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$HOME/.local/lib
 ```
 
 </details>
+
+We provide ready-to-use **shell/slurm scripts** for parallel evaluation in 
+the [`slurm/`](../slurm) folder that are equivalent to the following.
+
+**VTCBench** evaluation:
+
+```sh
+uv run examples/run.py \
+  --model config/model/qwen_2.5_vl_7b.json \
+  --data config/data/nolima.json \
+  --data.context_length 1000 \
+  --render config/render/default.yml \
+  # --run.num_tasks 1 # for smoke test
+```
+
+**VTCBench-Wild** evaluation:
+
+```sh
+# no rendering and context length params, because they come from -wild dataset
+uv run examples/run_wild.py \
+  --model config/model/qwen_2.5_vl_7b.json \
+  --data.path MLLM/VTCBench \
+  --data.split Retrieval \
+  # --run.num_tasks 1 # for smoke test
+```
+
+Collect results by running `uv run examples/collect.py results`, or 
+`uv run examples/collect.py /path/to/results/`.
+This will print a table like below:
+
+```
+                     contains_all  ROUGE-L  json_id
+render_css model_id                                
+           Qwen3-8B         99.38    74.35      800
+```
 
 ## vLLM Serving
 

@@ -5,7 +5,7 @@ build-backend = "uv_build"
 [project]
 name = "VTCBench"
 version = "0.1.0"
-description = "Needle-In-A-Haystack revisited from VLM's Perspective"
+description = "A vision-text compression benchmark for Vision Language Models."
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
