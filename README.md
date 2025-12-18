@@ -10,14 +10,14 @@
   <a href="https://creativecommons.org/licenses/by-nc/4.0/">
     <img src="https://img.shields.io/badge/CC_BY--NC_4.0-ED592F?logo=creativecommons&logoColor=white" alt="License: CC BY-NC 4.0" /></a>
   <a href="./CITATION.cff">
-    <img src="https://img.shields.io/badge/CITATION-grey" alt="Citation" /></a>
+    <img src="https://img.shields.io/badge/CITATION-AC7F5E" alt="Citation" /></a>
 </div>
-<div align="center">
+<p align="center">
   <a href="https://github.com/Moenupa/VTCBench">
-    <img src="https://img.shields.io/badge/Moenupa/VTCBench-24292E?logo=github" alt="github.com/Moenupa/VTCBench" /></a>
-  <a href="https://github.com/open-compass/VLMEvalKit">
-    <img src="https://img.shields.io/badge/open--compass/VLMEvalKit-24292E?logo=github" alt="github.com/open-compass/VLMEvalKit" /></a>
-</div>
+    <img src="https://img.shields.io/badge/Moenupa/VTCBench-2B3137?logo=github" alt="github.com/Moenupa/VTCBench" /></a>
+  <a href="https://github.com/bjzhb666/VLMEvalKit">
+    <img src="https://img.shields.io/badge/bjzhb666/VLMEvalKit-2B3137?logo=github" alt="github.com/bjzhb666/VLMEvalKit" /></a>
+</p>
 
 VTCBench is the first comprehensive benchmark specifically designed to evaluate
 the long-context understanding capabilities of Vision-Language Models (VLMs) 
