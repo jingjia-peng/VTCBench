@@ -156,3 +156,17 @@ Easily extensible to new models via our server-client evaluation framework.
 ## 🛠 Usage & Data
 
 Please refer to the [Usage Guide](docs/USAGE.md) for instructions on how to use VTCBench.
+
+## 📄 Citation
+
+```bibtex
+@misc{zhao2025vtcbenchvisionlanguagemodelsunderstand,
+      title={VTCBench: Can Vision-Language Models Understand Long Context with Vision-Text Compression?},
+      author={Hongbo Zhao and Meng Wang and Fei Zhu and Wenzhuo Liu and Bolin Ni and Fanhu Zeng and Gaofeng Meng and Zhaoxiang Zhang},
+      year={2025},
+      eprint={2512.15649},
+      archivePrefix={arXiv},
+      primaryClass={cs.CV},
+      url={https://arxiv.org/abs/2512.15649},
+}
+```
