@@ -1,6 +1,6 @@
 import os
 
-from datasets import load_dataset
+from datasets import Image, List, load_dataset
 from jsonargparse import ArgumentParser
 from numpy.random import RandomState
 from tqdm import tqdm
@@ -55,7 +55,7 @@ def run_wild(
 
     dataset = load_dataset(
         data_path, split=split, columns=["problem", "answers", "images", "_context"]
-    )
+    ).cast_column("images", List(Image(decode=False)))
 
     tasks: list[dict] = []
     for example in dataset:

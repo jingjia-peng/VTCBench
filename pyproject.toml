@@ -9,14 +9,12 @@ description = "A vision-text compression benchmark for Vision Language Models."
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-    "httpx",
     "jsonargparse[signatures]>=4.35.0,<4.43.0",
     "openai",
     "tenacity>=9.0.0",
     "tiktoken",
     "transformers>=4.47.1,<=4.57.1,!=4.57.0,!=4.52.0",
-    "sentencepiece",
-    "pillow",
+    "datasets[vision]",
     "deocr[playwright,pymupdf]>=0.3.0",
     "rouge-score>=0.1.2",
 ]

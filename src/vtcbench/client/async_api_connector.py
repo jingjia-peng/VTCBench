@@ -144,9 +144,9 @@ class APIConnector:
             return completion
         except Exception as e:
             print("=== API Call Exception ===")
-            pprint(params)
-            pprint(messages)
+            pprint(e)
             print("--------------------------")
+            # comment this if you want to skip exceptions
             raise e
 
     async def generate_response(
@@ -279,6 +279,13 @@ class APIConnector:
                 generation_kwargs=generation_kwargs,
                 extra_kwargs=extra_kwargs,
             )
+
+            if completion is None:
+                return {
+                    "response": "",
+                    "finish_reason": "error",
+                    "api_cache_path": cache_path,
+                }
 
             output = {
                 "response": completion.choices[0].message.content,
