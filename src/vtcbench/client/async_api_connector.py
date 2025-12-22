@@ -114,7 +114,7 @@ class APIConnector:
         max_tokens: int,
         generation_kwargs: dict | None = None,
         extra_kwargs: dict | None = None,
-    ) -> "ChatCompletion":
+    ) -> Optional["ChatCompletion"]:
         params = {"model": self.model, "messages": messages, "seed": 43}
         if self.model_config.get("openai_thinking_model", False):
             # thinking models, e.g. GPT-5 use another set of params

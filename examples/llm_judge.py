@@ -1,17 +1,34 @@
 import json
+import os.path as osp
 import re
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import Any
+import sys
+from glob import glob
+from typing import Any, TypedDict
 
 from openai import OpenAI
+from tqdm.contrib.concurrent import process_map, thread_map
 
 # 初始化OpenAI客户端
 # 注意：需要设置OPENAI_API_KEY环境变量
 try:
     client = OpenAI()
-except Exception as e:
-    print("警告：OpenAI客户端初始化失败，请确保已设置正确的API密钥。")
+except Exception:
+    print(
+        "WARN: Please set a valid OPENAI_API_KEY environment variable. OpenAI client initialization failed."
+    )
     client = None
+
+
+class ExampleMetadata(TypedDict):
+    problem: str
+    answers: list[str]
+
+
+class ResultEntry(TypedDict):
+    result_path: str  # index
+    example_meta: ExampleMetadata  # where question and gt stored
+    results: list[dict]  # where pred stored under results[0]["response"]
+
 
 # 评分提示词
 QUESTION_QUALITY_PROMPT_EN_NO_COT = (
@@ -124,77 +141,38 @@ def evaluate_answer_with_gpt(
     return "C"  # 所有重试都失败时返回无效
 
 
-def process_single_entry(entry_data: dict[str, Any]) -> dict[str, Any] | None:
-    """
-    处理单个JSON条目
-    """
+def process_single_entry(entry_data: ResultEntry) -> dict[str, Any] | None:
     try:
-        line_num = entry_data["line_num"]
-        data = entry_data["data"]
+        result_path = entry_data["result_path"]
+        question = entry_data["example_meta"]["problem"]
+        gold_answers = entry_data["example_meta"]["answers"]
+        response = entry_data["results"][0]["response"]
 
-        # 提取必要字段
-        question = data.get("example_meta", {}).get("problem", "")
-        gold_answers = data.get("gold_answers", [])
-        response = data.get("response", "")
-
-        # 将gold_answers列表转换为字符串
         gold_answer_str = ", ".join(gold_answers) if gold_answers else ""
 
-        # 使用GPT评估答案（现在包含重试逻辑）
         result = evaluate_answer_with_gpt(question, gold_answer_str, response)
 
         return {
-            "line_number": line_num,
+            "result_path": result_path,
             "question": question,
             "gold_answer": gold_answer_str,
             "model_response": response,
             "evaluation": result,
         }
     except Exception as e:
-        print(f"处理第{entry_data['line_num']}行时出错: {e}")
+        print(f"处理 {entry_data['result_path']} 时出错: {e}")
         return None
 
 
-def process_jsonl_file(file_path: str, max_workers: int = 5) -> dict[str, Any]:
-    """
-    处理JSONL文件并评估所有答案（支持多线程）
-    """
-    entries = []
-
-    # 读取所有条目
-    with open(file_path, "r", encoding="utf-8") as f:
-        for line_num, line in enumerate(f, 1):
-            try:
-                data = json.loads(line)
-                entries.append({"line_num": line_num, "data": data})
-            except json.JSONDecodeError:
-                print(f"第{line_num}行JSON解析错误")
-                continue
-            except Exception as e:
-                print(f"读取第{line_num}行时出错: {e}")
-                continue
-
-    # 使用线程池处理条目
-    results = []
-    correct_count = 0
-
-    with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        # 提交所有任务
-        future_to_entry = {
-            executor.submit(process_single_entry, entry): entry for entry in entries
-        }
-
-        # 收集结果
-        for future in as_completed(future_to_entry):
-            result = future.result()
-            if result is not None:
-                results.append(result)
-                if result["evaluation"] == "A":
-                    correct_count += 1
-
-    # 按行号排序结果
-    results.sort(key=lambda x: x["line_number"])
-
+def process_entries(entries: list[ResultEntry], max_workers: int = 5) -> dict[str, Any]:
+    results = thread_map(
+        process_single_entry,
+        entries,
+        max_workers=max_workers,
+        desc="LLM Judging",
+    )
+    correct_count = sum(1 for r in results if r and r["evaluation"] == "A")
+    results.sort(key=lambda x: x["result_path"])
     return {
         "results": results,
         "total": len(results),
@@ -203,26 +181,37 @@ def process_jsonl_file(file_path: str, max_workers: int = 5) -> dict[str, Any]:
     }
 
 
-def main():
-    """
-    主函数
-    """
-    file_path = "qwen3_8b_memory.jsonl"
+def load_json(fp: str) -> ResultEntry:
+    return json.load(open(fp))
 
-    print("开始处理JSONL文件...")
-    result = process_jsonl_file(file_path, max_workers=10)
 
-    print(f"\n处理完成！")
-    print(f"总条目数: {result['total']}")
-    print(f"正确答案数: {result['correct_count']}")
-    print(f"准确率: {result['accuracy']:.2%}")
-
-    # 保存详细结果到文件
-    with open("evaluation_results.json", "w", encoding="utf-8") as f:
-        json.dump(result, f, ensure_ascii=False, indent=2)
-
-    print("\n详细结果已保存到 evaluation_results.json")
+def folder_to_entries(folder_path: str) -> list[ResultEntry]:
+    files = glob(f"{folder_path}/*/*.json", recursive=True)
+    # read each json file as a ResultEntry
+    entries: list[ResultEntry] = process_map(
+        load_json,
+        files,
+        max_workers=10,
+        desc="Loading JSON files",
+    )
+    assert len(entries) > 0, "No JSON files found."
+    return entries
 
 
 if __name__ == "__main__":
-    main()
+    for folder_path in sys.argv[1:]:
+        if not osp.isdir(folder_path):
+            print(f"usage: python {sys.argv[0]} <results_folder_for_model> ...")
+            continue
+
+        entries = folder_to_entries(folder_path)
+        result = process_entries(entries, max_workers=10)
+
+        print(f"correct/total: {result['correct_count']}/{result['total']}")
+        print(f"Acc: {result['accuracy']:.2%}")
+
+        # 保存详细结果到文件
+        with open(f"{folder_path}/evaluation_results.json", "w", encoding="utf-8") as f:
+            json.dump(result, f, ensure_ascii=False, indent=2)
+
+        print(f"-> {folder_path}/evaluation_results.json")
