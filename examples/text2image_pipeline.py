@@ -7,32 +7,22 @@ This script:
 3. Saves results to JSONL format with updated image paths
 
 Usage:
-    # Basic usage - generate images from a JSONL file
-    python examples/text2image_pipeline.py \
-        --input_file data/my_dataset.jsonl \
-        --output_dir data/my_dataset_generated \
-        --render.saveImage True
-
-    # Generate from a JSON file (array of objects)
-    python examples/text2image_pipeline.py \
-        --input_file data/my_dataset.json \
-        --output_dir data/my_dataset_generated \
-        --render.saveImage True \
-        --num_workers 4
-
-    # Test with a small number of examples
-    python examples/text2image_pipeline.py \
-        --input_file data/my_dataset.jsonl \
-        --output_dir data/my_dataset_generated \
-        --render.saveImage True \
-        --num_examples 10
-
-    # Use HuggingFace dataset (backward compatibility)
+    # Use HuggingFace dataset
     python examples/text2image_pipeline.py \
         --data.path MLLM-CL/VTCBench \
-        --data.split Retrieval \
+        --data.split Memory \
         --output_dir data/VTCBench_regenerated \
-        --render.saveImage True
+        --render.saveImage True \
+        --num_workers 4 \
+        --num_examples 10
+
+    # Generate images from a JSON orJSONL file
+    python examples/text2image_pipeline.py \
+        --input_file data/Memory.jsonl \
+        --output_dir data/Memory_generated \
+        --render.saveImage True \
+        --num_workers 4 \
+        --num_examples 10
 """
 
 import asyncio
